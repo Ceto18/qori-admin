@@ -7,11 +7,11 @@ async function handler(
   context: { params: Promise<{ path: string[] }> }
 ) {
   try {
-    // 🔥 FIX AQUÍ
     const { path } = await context.params;
 
     const finalPath = path?.join("/") || "";
-    const url = `${BACKEND_URL}${finalPath}`;
+    const url = `${BACKEND_URL}${finalPath}${req.nextUrl.search}`;
+
     const method = req.method;
 
     console.log("🟡 ===== PROXY REQUEST =====");
@@ -19,36 +19,78 @@ async function handler(
     console.log("➡️ PATH:", finalPath);
     console.log("➡️ URL BACKEND:", url);
 
-    let body;
+    // 🔥 LOGS IMPORTANTES
+    console.log("📦 HEADERS RECIBIDOS:");
+    console.log(Object.fromEntries(req.headers.entries()));
 
-    if (method !== "GET") {
+    const authorization = req.headers.get("authorization");
+
+    console.log("🔑 AUTHORIZATION:", authorization);
+
+    let body: string | undefined;
+
+    if (
+      method !== "GET" &&
+      method !== "DELETE"
+    ) {
       const jsonBody = await req.json();
+
       body = JSON.stringify(jsonBody);
 
       console.log("➡️ BODY:", jsonBody);
     }
 
+    console.log("📤 HEADERS ENVIADOS AL BACKEND:");
+    console.log({
+      Authorization: authorization,
+    });
+
     const response = await fetch(url, {
       method,
+
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
         "X-Requested-With": "XMLHttpRequest",
+
+        ...(authorization && {
+          Authorization: authorization,
+        }),
+
         ...(process.env.NODE_ENV === "development" && {
           "ngrok-skip-browser-warning": "true",
         }),
       },
+
       body,
     });
 
+    console.log("HEADERS FETCH:", {
+  "Content-Type": "application/json",
+  Accept: "application/json",
+  "X-Requested-With": "XMLHttpRequest",
+  "ngrok-skip-browser-warning": "true",
+});
     console.log("🟢 ===== BACKEND RESPONSE =====");
+    console.log("⬅️ RESPONSE URL:", response.url);
     console.log("⬅️ STATUS:", response.status);
+
+    console.log(
+      "⬅️ RESPONSE HEADERS:"
+    );
+    console.log(
+      Object.fromEntries(
+        response.headers.entries()
+      )
+    );
 
     const data = await response.json();
 
     console.log("⬅️ DATA:", data);
 
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, {
+      status: response.status,
+    });
 
   } catch (error: any) {
     console.error("🔴 ERROR PROXY:", error);
@@ -59,9 +101,17 @@ async function handler(
         message: "Error en proxy",
         error: error.message,
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }
 
-export { handler as GET, handler as POST, handler as PUT, handler as DELETE };
+export {
+  handler as GET,
+  handler as POST,
+  handler as PUT,
+  handler as DELETE,
+  handler as PATCH,
+};

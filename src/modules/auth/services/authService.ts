@@ -13,3 +13,18 @@ export const loginRequest = async (data: {
     expiresIn: response.data.data.expires_in,
   };
 };
+
+export const registerRequest = async (data: {
+  name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+}) => {
+  const response = await api.post("/auth/register", data);
+
+  return {
+    user: response.data.data.user,
+    token: response.data.data.token,
+  };
+};

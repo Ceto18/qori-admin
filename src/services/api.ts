@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export const api = axios.create({
   baseURL: "/api",
@@ -9,13 +10,43 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token");
+  const url = config.url ?? "";
 
-    if (token) {
-      config.headers = config.headers || {};
-      config.headers.Authorization = `Bearer ${token}`;
+  const isAuthRequest =
+    url.includes("/auth/login") ||
+    url.includes("/auth/register") ||
+    url.includes("/auth/forgot-password") ||
+    url.includes("/auth/reset-password");
+
+  if (isAuthRequest) {
+    if (config.headers) {
+      delete config.headers.Authorization;
     }
+
+    console.log("TOKEN FINAL: auth request sin token");
+    return config;
+  }
+
+  let token = useAuthStore.getState().token;
+
+  if (!token && typeof window !== "undefined") {
+    const persisted = localStorage.getItem("auth-storage");
+
+    if (persisted) {
+      try {
+        const parsed = JSON.parse(persisted);
+        token = parsed?.state?.token ?? null;
+      } catch {
+        localStorage.removeItem("auth-storage");
+        token = null;
+      }
+    }
+  }
+
+  console.log("TOKEN FINAL:", token);
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
 
   return config;
@@ -30,8 +61,7 @@ api.interceptors.response.use(
     });
 
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "/signin";
+      useAuthStore.getState().logout();
     }
 
     return Promise.reject(error);

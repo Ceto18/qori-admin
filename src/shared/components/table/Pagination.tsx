@@ -14,7 +14,7 @@ const Pagination: React.FC<PaginationProps> = ({
     (_, i) => i + Math.max(currentPage - 1, 1)
   );
 
-  return (
+  return (  
     <div className="flex items-center ">
       <button
         onClick={() => onPageChange(currentPage - 1)}
