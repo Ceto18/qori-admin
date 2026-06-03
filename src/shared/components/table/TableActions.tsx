@@ -4,9 +4,14 @@ import { Eye, Pencil, Trash2 } from "lucide-react";
 
 interface Props<T> {
   row: T;
+
   onView?: (row: T) => void;
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
+
+  showView?: boolean;
+  showEdit?: boolean;
+  showDelete?: boolean;
 }
 
 export default function TableActions<T>({
@@ -14,12 +19,19 @@ export default function TableActions<T>({
   onView,
   onEdit,
   onDelete,
+  showView = true,
+  showEdit = true,
+  showDelete = true,
 }: Props<T>) {
-  if (!onView && !onEdit && !onDelete) return null;
+  const canView = showView && !!onView;
+  const canEdit = showEdit && !!onEdit;
+  const canDelete = showDelete && !!onDelete;
+
+  if (!canView && !canEdit && !canDelete) return null;
 
   return (
     <div className="flex items-center justify-end gap-2">
-      {onView && (
+      {canView && (
         <button
           type="button"
           onClick={() => onView(row)}
@@ -30,7 +42,7 @@ export default function TableActions<T>({
         </button>
       )}
 
-      {onEdit && (
+      {canEdit && (
         <button
           type="button"
           onClick={() => onEdit(row)}
@@ -41,7 +53,7 @@ export default function TableActions<T>({
         </button>
       )}
 
-      {onDelete && (
+      {canDelete && (
         <button
           type="button"
           onClick={() => onDelete(row)}

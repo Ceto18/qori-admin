@@ -9,9 +9,18 @@ async function handler(
   try {
     const { path } = await context.params;
 
+    if (!BACKEND_URL) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "NEXT_PUBLIC_API_URL no está configurado",
+        },
+        { status: 500 }
+      );
+    }
+
     const finalPath = path?.join("/") || "";
     const url = `${BACKEND_URL}${finalPath}${req.nextUrl.search}`;
-
     const method = req.method;
 
     console.log("🟡 ===== PROXY REQUEST =====");
@@ -19,79 +28,88 @@ async function handler(
     console.log("➡️ PATH:", finalPath);
     console.log("➡️ URL BACKEND:", url);
 
-    // 🔥 LOGS IMPORTANTES
     console.log("📦 HEADERS RECIBIDOS:");
     console.log(Object.fromEntries(req.headers.entries()));
 
     const authorization = req.headers.get("authorization");
+    const contentType = req.headers.get("content-type");
 
     console.log("🔑 AUTHORIZATION:", authorization);
+    console.log("📦 CONTENT-TYPE:", contentType);
 
-    let body: string | undefined;
+    const isAuthRoute =
+      finalPath === "auth/login" ||
+      finalPath === "auth/register" ||
+      finalPath.includes("auth/forgot-password") ||
+      finalPath.includes("auth/reset-password");
 
-    if (
-      method !== "GET" &&
-      method !== "DELETE"
-    ) {
-      const jsonBody = await req.json();
+    const headers: HeadersInit = {
+      Accept: "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+      ...(process.env.NODE_ENV === "development" && {
+        "ngrok-skip-browser-warning": "true",
+      }),
+    };
 
-      body = JSON.stringify(jsonBody);
+    if (contentType) {
+      headers["Content-Type"] = contentType;
+    }
 
-      console.log("➡️ BODY:", jsonBody);
+    if (authorization && !isAuthRoute) {
+      headers.Authorization = authorization;
+    }
+
+    let body: BodyInit | undefined = undefined;
+
+    if (method !== "GET" && method !== "HEAD") {
+      const rawBody = await req.arrayBuffer();
+      body = rawBody;
+
+      console.log("➡️ BODY TYPE:", contentType);
+      console.log("➡️ BODY SIZE:", rawBody.byteLength);
     }
 
     console.log("📤 HEADERS ENVIADOS AL BACKEND:");
-    console.log({
-      Authorization: authorization,
-    });
+    console.log(headers);
 
     const response = await fetch(url, {
       method,
-
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-
-        ...(authorization && {
-          Authorization: authorization,
-        }),
-
-        ...(process.env.NODE_ENV === "development" && {
-          "ngrok-skip-browser-warning": "true",
-        }),
-      },
-
+      headers,
       body,
+      redirect: "manual",
     });
 
-    console.log("HEADERS FETCH:", {
-  "Content-Type": "application/json",
-  Accept: "application/json",
-  "X-Requested-With": "XMLHttpRequest",
-  "ngrok-skip-browser-warning": "true",
-});
+    const rawText = await response.text();
+
     console.log("🟢 ===== BACKEND RESPONSE =====");
     console.log("⬅️ RESPONSE URL:", response.url);
     console.log("⬅️ STATUS:", response.status);
 
-    console.log(
-      "⬅️ RESPONSE HEADERS:"
-    );
-    console.log(
-      Object.fromEntries(
-        response.headers.entries()
-      )
-    );
+    console.log("⬅️ RESPONSE HEADERS:");
+    console.log(Object.fromEntries(response.headers.entries()));
 
-    const data = await response.json();
+    console.log("⬅️ RAW TEXT:", rawText);
 
-    console.log("⬅️ DATA:", data);
+    let data: unknown;
+
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "El backend no devolvió JSON",
+          raw: rawText,
+        },
+        {
+          status: response.status || 500,
+        }
+      );
+    }
 
     return NextResponse.json(data, {
       status: response.status,
     });
-
   } catch (error: any) {
     console.error("🔴 ERROR PROXY:", error);
 

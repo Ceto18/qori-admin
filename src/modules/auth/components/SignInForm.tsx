@@ -11,6 +11,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { loginRequest } from "../services/authService";
+import { showSuccess } from "@/shared/utils/toast";
+import { handleApiError } from "@/shared/utils/handleApiError";
 
 export default function SignInForm() {
     const router = useRouter();
@@ -38,7 +40,6 @@ export default function SignInForm() {
 
             console.log("RESPUESTA BACKEND:", response);
 
-
             const user = response.user;
             const token = response.token;
 
@@ -51,11 +52,14 @@ export default function SignInForm() {
                 token,
             });
 
-            router.replace("/");
+            //showSuccess(response.message ?? "Inicio de sesión correcto.");
+            showSuccess("Inicio de sesión correcto.");
 
+            router.replace("/");
         } catch (error: any) {
             console.error("Error login:", error?.response?.data || error);
-            alert("Credenciales incorrectas o error en el servidor");
+
+            handleApiError(error);
         } finally {
             setLoading(false);
         }

@@ -3,7 +3,7 @@ import { api } from "@/services/api";
 type GetOrganizationsParams = {
   page?: number;
   per_page?: number;
-  name?: string;
+  search?: string;
 };
 
 export const organizationService = {
@@ -22,23 +22,13 @@ export const organizationService = {
   },
 
   createOrganization: async (payload: FormData) => {
-    const res = await api.post("/organization", payload, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const res = await api.post("/organization", payload);
 
     return res.data;
   },
 
   updateOrganization: async (uuid: string, payload: FormData) => {
-    payload.append("_method", "PUT");
-
-    const res = await api.post(`/organization/${uuid}`, payload, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const res = await api.post(`/organization/${uuid}`, payload);
 
     return res.data;
   },

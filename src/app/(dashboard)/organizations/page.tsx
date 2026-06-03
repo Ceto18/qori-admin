@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import TableToolbar from "@/shared/components/table/TableToolbar";
 import TablePagination from "@/shared/components/table/TablePagination";
+import ConfirmModal from "@/shared/components/ui/modal/ConfirmModal";
 
 import OrganizationTable from "@/modules/organizations/components/OrganizationTable";
 import { useOrganizationStore } from "@/modules/organizations/store/useOrganizationStore";
@@ -20,9 +21,12 @@ export default function OrganizationsPage() {
     perPage,
     loading,
     fetchOrganizations,
+    deleteOrganization,
   } = useOrganizationStore();
 
   const [search, setSearch] = useState("");
+  const [organizationToDelete, setOrganizationToDelete] =
+    useState<Organization | null>(null);
 
   useEffect(() => {
     fetchOrganizations({
@@ -30,15 +34,17 @@ export default function OrganizationsPage() {
       perPage,
       search: "",
     });
-  }, [fetchOrganizations, perPage]);
+  }, [fetchOrganizations]);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
+  };
 
+  const handleSearchSubmit = () => {
     fetchOrganizations({
       page: 1,
       perPage,
-      search: value,
+      search,
     });
   };
 
@@ -67,10 +73,30 @@ export default function OrganizationsPage() {
   };
 
   const handleDelete = (organization: Organization) => {
-    console.log("Eliminar organización:", organization.uuid);
+    setOrganizationToDelete(organization);
+  };
 
-    // Luego aquí conectamos con el store:
-    // deleteOrganization(organization.uuid);
+  const handleConfirmDelete = async () => {
+    if (!organizationToDelete) return;
+
+    try {
+      await deleteOrganization(organizationToDelete.uuid);
+      setOrganizationToDelete(null);
+
+      fetchOrganizations({
+        page: currentPage,
+        perPage,
+        search,
+      });
+    } catch {
+      // El error ya se muestra desde el store.
+    }
+  };
+
+  const handleCancelDelete = () => {
+    if (loading) return;
+
+    setOrganizationToDelete(null);
   };
 
   return (
@@ -83,6 +109,7 @@ export default function OrganizationsPage() {
         searchValue={search}
         searchPlaceholder="Buscar organización..."
         onSearchChange={handleSearchChange}
+        onSearchSubmit={handleSearchSubmit}
       />
 
       <OrganizationTable
@@ -97,8 +124,22 @@ export default function OrganizationsPage() {
         currentPage={currentPage}
         totalPages={totalPages}
         perPage={perPage}
+        perPageOptions={[10, 25, 50, 100]}
         onPageChange={handlePageChange}
         onPerPageChange={handlePerPageChange}
+      />
+
+      <ConfirmModal
+        open={Boolean(organizationToDelete)}
+        title="Eliminar organización"
+        message={`¿Seguro que deseas eliminar la organización "${
+          organizationToDelete?.name ?? ""
+        }"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        loading={loading}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
       />
     </div>
   );

@@ -10,9 +10,14 @@ import { Organization } from "../types";
 interface Props {
   data: Organization[];
   loading?: boolean;
+
   onView?: (organization: Organization) => void;
   onEdit?: (organization: Organization) => void;
   onDelete?: (organization: Organization) => void;
+
+  showView?: boolean;
+  showEdit?: boolean;
+  showDelete?: boolean;
 }
 
 export default function OrganizationTable({
@@ -21,6 +26,9 @@ export default function OrganizationTable({
   onView,
   onEdit,
   onDelete,
+  showView = true,
+  showEdit = true,
+  showDelete = true,
 }: Props) {
   const columns: DataTableColumn<Organization>[] = [
     {
@@ -65,6 +73,9 @@ export default function OrganizationTable({
       onView={onView}
       onEdit={onEdit}
       onDelete={onDelete}
+      showView={false}
+      showEdit={showEdit}
+      showDelete={showDelete}
     />
   );
 }

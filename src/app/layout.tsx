@@ -6,27 +6,41 @@ import { ThemeProvider } from "@/shared/context/ThemeContext";
 import { Toaster } from "react-hot-toast";
 
 const outfit = Outfit({
-  subsets: ["latin"],
+    subsets: ["latin"],
 });
 
 export const metadata = {
-  title: "Qori Admin",
-  description: "Panel administrativo Qori",
+    title: "Qori Admin",
+    description: "Panel administrativo Qori",
 };
 
 export default function RootLayout({
-  children,
+    children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
-  return (
-    <html lang="es">
-      <body className={`${outfit.className} dark:bg-gray-900`}>
-        <ThemeProvider>
-          {children}
-          <Toaster position="top-right" />
-        </ThemeProvider>
-      </body>
-    </html>
-  );
+    return (
+        <html lang="es">
+            <body className={`${outfit.className} dark:bg-gray-900`}>
+                <ThemeProvider>
+                    {children}
+
+                    <Toaster
+                        position="top-center"
+                        containerStyle={{
+                            top: 80,
+                        }}
+                        toastOptions={{
+                            duration: 3500,
+                            style: {
+                                fontSize: "14px",
+                                borderRadius: "12px",
+                                padding: "12px 16px",
+                            },
+                        }}
+                    />
+                </ThemeProvider>
+            </body>
+        </html>
+    );
 }

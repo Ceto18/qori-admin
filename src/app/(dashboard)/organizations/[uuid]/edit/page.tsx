@@ -31,9 +31,13 @@ export default function EditOrganizationPage() {
   }, [uuid, fetchOrganization, clearOrganization]);
 
   const handleSubmit = async (payload: FormData) => {
-    await updateOrganization(uuid, payload);
+    try {
+      await updateOrganization(uuid, payload);
 
-    router.push("/organizations");
+      router.push("/organizations");
+    } catch {
+
+    }
   };
 
   const handleCancel = () => {

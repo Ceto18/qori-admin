@@ -4,19 +4,23 @@ import { useAuthStore } from "@/store/useAuthStore";
 export const api = axios.create({
   baseURL: "/api",
   headers: {
-    "Content-Type": "application/json",
     Accept: "application/json",
   },
 });
 
-api.interceptors.request.use((config) => {
-  const url = config.url ?? "";
-
-  const isAuthRequest =
+const isAuthUrl = (url: string) => {
+  return (
     url.includes("/auth/login") ||
     url.includes("/auth/register") ||
     url.includes("/auth/forgot-password") ||
-    url.includes("/auth/reset-password");
+    url.includes("/auth/reset-password")
+  );
+};
+
+api.interceptors.request.use((config) => {
+  const url = config.url ?? "";
+
+  const isAuthRequest = isAuthUrl(url);
 
   if (isAuthRequest) {
     if (config.headers) {
@@ -24,6 +28,13 @@ api.interceptors.request.use((config) => {
     }
 
     console.log("TOKEN FINAL: auth request sin token");
+
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    } else {
+      config.headers["Content-Type"] = "application/json";
+    }
+
     return config;
   }
 
@@ -49,6 +60,12 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
+  } else {
+    config.headers["Content-Type"] = "application/json";
+  }
+
   return config;
 });
 
@@ -60,7 +77,10 @@ api.interceptors.response.use(
       data: error.response?.data,
     });
 
-    if (error.response?.status === 401) {
+    const url = error.config?.url ?? "";
+    const isAuthRequest = isAuthUrl(url);
+
+    if (error.response?.status === 401 && !isAuthRequest) {
       useAuthStore.getState().logout();
     }
 

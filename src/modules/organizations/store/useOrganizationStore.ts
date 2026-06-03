@@ -2,6 +2,9 @@ import { create } from "zustand";
 import { organizationService } from "../services/organizationService";
 import { Organization } from "../types";
 
+import { showSuccess } from "@/shared/utils/toast";
+import { handleApiError } from "@/shared/utils/handleApiError";
+
 type FetchOrganizationsParams = {
   page?: number;
   perPage?: number;
@@ -20,14 +23,12 @@ interface OrganizationState {
   total: number;
 
   fetchOrganizations: (params?: FetchOrganizationsParams) => Promise<void>;
+
   fetchOrganization: (uuid: string) => Promise<void>;
 
   createOrganization: (payload: FormData) => Promise<void>;
 
-  updateOrganization: (
-    uuid: string,
-    payload: FormData
-  ) => Promise<void>;
+  updateOrganization: (uuid: string, payload: FormData) => Promise<void>;
 
   deleteOrganization: (uuid: string) => Promise<void>;
 
@@ -49,29 +50,24 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     try {
       set({ loading: true });
 
-      const {
-        page = 1,
-        perPage = get().perPage,
-        search = "",
-      } = params;
+      const { page = 1, perPage = get().perPage, search = "" } = params;
 
       const response = await organizationService.getOrganizations({
         page,
         per_page: perPage,
-        name: search,
+        search,
       });
-
-      console.log("GET ORGANIZATIONS RESPONSE:", response);
 
       set({
         organizations: response.data?.data ?? [],
         currentPage: response.data?.current_page ?? 1,
         totalPages: response.data?.last_page ?? 1,
-        perPage: response.data?.per_page ?? perPage,
+        perPage: Number(response.data?.per_page ?? perPage),
         total: response.data?.total ?? 0,
       });
     } catch (error) {
       console.error("Error fetchOrganizations:", error);
+      handleApiError(error);
     } finally {
       set({ loading: false });
     }
@@ -84,25 +80,17 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
         organization: null,
       });
 
-      console.log("FETCH ORGANIZATION UUID:", uuid);
-
       const response = await organizationService.getOrganization(uuid);
 
-      console.log("GET ORGANIZATION RESPONSE:", response);
-      console.log("GET ORGANIZATION RESPONSE.DATA:", response?.data);
-
       const organizationData =
-        response?.data?.organization ??
-        response?.data ??
-        null;
-
-      console.log("ORGANIZATION DATA FINAL:", organizationData);
+        response?.data?.organization ?? response?.data ?? null;
 
       set({
         organization: organizationData,
       });
     } catch (error) {
       console.error("Error fetchOrganization:", error);
+      handleApiError(error);
     } finally {
       set({ loading: false });
     }
@@ -112,9 +100,12 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     try {
       set({ loading: true });
 
-      await organizationService.createOrganization(payload);
+      const response = await organizationService.createOrganization(payload);
+
+      showSuccess(response?.message ?? "Organización creada correctamente.");
     } catch (error) {
       console.error("Error createOrganization:", error);
+      handleApiError(error);
       throw error;
     } finally {
       set({ loading: false });
@@ -125,9 +116,12 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     try {
       set({ loading: true });
 
-      await organizationService.updateOrganization(uuid, payload);
+      const response = await organizationService.updateOrganization(uuid, payload);
+
+      showSuccess(response?.message ?? "Organización actualizada correctamente.");
     } catch (error) {
       console.error("Error updateOrganization:", error);
+      handleApiError(error);
       throw error;
     } finally {
       set({ loading: false });
@@ -138,7 +132,9 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     try {
       set({ loading: true });
 
-      await organizationService.deleteOrganization(uuid);
+      const response = await organizationService.deleteOrganization(uuid);
+
+      showSuccess(response?.message ?? "Organización eliminada correctamente.");
 
       const { currentPage, perPage } = get();
 
@@ -148,6 +144,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
       });
     } catch (error) {
       console.error("Error deleteOrganization:", error);
+      handleApiError(error);
       throw error;
     } finally {
       set({ loading: false });

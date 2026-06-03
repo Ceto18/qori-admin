@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 import {
   Table,
   TableBody,
@@ -28,6 +30,10 @@ interface Props<T> {
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
 
+  showView?: boolean;
+  showEdit?: boolean;
+  showDelete?: boolean;
+
   getRowKey: (row: T, index: number) => string | number;
 }
 
@@ -39,9 +45,16 @@ export default function DataTable<T>({
   onView,
   onEdit,
   onDelete,
+  showView = true,
+  showEdit = true,
+  showDelete = true,
   getRowKey,
 }: Props<T>) {
-  const hasActions = Boolean(onView || onEdit || onDelete);
+  const canView = showView && !!onView;
+  const canEdit = showEdit && !!onEdit;
+  const canDelete = showDelete && !!onDelete;
+
+  const hasActions = canView || canEdit || canDelete;
 
   const getAlignClass = (align?: "left" | "center" | "right") => {
     switch (align) {
@@ -124,6 +137,9 @@ export default function DataTable<T>({
                           onView={onView}
                           onEdit={onEdit}
                           onDelete={onDelete}
+                          showView={showView}
+                          showEdit={showEdit}
+                          showDelete={showDelete}
                         />
                       </TableCell>
                     )}

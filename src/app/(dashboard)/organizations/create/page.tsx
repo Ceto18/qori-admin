@@ -11,9 +11,12 @@ export default function CreateOrganizationPage() {
   const { loading, createOrganization } = useOrganizationStore();
 
   const handleSubmit = async (payload: FormData) => {
-    await createOrganization(payload);
+    try {
+      await createOrganization(payload);
 
-    router.push("/organizations");
+      router.push("/organizations");
+    } catch {
+    }
   };
 
   const handleCancel = () => {
