@@ -17,6 +17,7 @@ import {
   TableIcon,
   UserCircleIcon,
   Building2Icon,
+  WalletIcon,
 } from "@/shared/icons/index";
 import SidebarWidget from "./SidebarWidget";
 
@@ -37,6 +38,11 @@ const navItems: NavItem[] = [
     icon: <Building2Icon />,
     name: "Organizaciones",
     path: "/organizations",
+  },
+   {
+    icon: <WalletIcon />,
+    name: "Tarjetas de presentación",
+    path: "/cards",
   },
   {
     icon: <CalenderIcon />,
