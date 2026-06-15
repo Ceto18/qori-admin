@@ -13,7 +13,7 @@ export default function EditCardPage() {
   const router = useRouter();
   const params = useParams();
 
-  const uuid = String(params.uuid);
+  const uuid = String(params.uuid ?? "");
 
   const {
     selectedCard,
@@ -25,6 +25,8 @@ export default function EditCardPage() {
   } = useCardStore();
 
   useEffect(() => {
+    if (!uuid) return;
+
     fetchCard(uuid);
 
     return () => {
@@ -33,6 +35,10 @@ export default function EditCardPage() {
   }, [uuid, fetchCard, clearSelectedCard]);
 
   const handleSubmit = async (values: CardFormValues) => {
+    if (!uuid) {
+      throw new Error("No se encontró el UUID de la tarjeta.");
+    }
+
     await updateCard(uuid, values);
 
     router.push("/cards");

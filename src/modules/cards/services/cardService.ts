@@ -9,42 +9,61 @@ type GetCardsParams = {
 };
 
 export const cardService = {
-  getCards: async (params: GetCardsParams = {}) => {
-    const res = await api.get("/cards", {
+  getCards: async (
+    organizationUuid: string,
+    params: GetCardsParams = {}
+  ) => {
+    const res = await api.get(`/organization/${organizationUuid}/cards`, {
       params,
     });
 
     return res.data;
   },
 
-  getCard: async (uuid: string) => {
-    const res = await api.get(`/cards/${uuid}`);
+  getCard: async (organizationUuid: string, uuid: string) => {
+    const res = await api.get(
+      `/organization/${organizationUuid}/cards/${uuid}`
+    );
 
     return res.data;
   },
 
-  createCard: async (payload: FormData) => {
-    const res = await api.post("/cards", payload, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+  createCard: async (organizationUuid: string, payload: FormData) => {
+    const res = await api.post(
+      `/organization/${organizationUuid}/cards`,
+      payload,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
     return res.data;
   },
 
-  updateCard: async (uuid: string, payload: FormData) => {
-    const res = await api.post(`/cards/${uuid}`, payload, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+  updateCard: async (
+    organizationUuid: string,
+    uuid: string,
+    payload: FormData
+  ) => {
+    const res = await api.post(
+      `/organization/${organizationUuid}/cards/${uuid}`,
+      payload,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
     return res.data;
   },
 
-  deleteCard: async (uuid: string) => {
-    const res = await api.delete(`/cards/${uuid}`);
+  deleteCard: async (organizationUuid: string, uuid: string) => {
+    const res = await api.delete(
+      `/organization/${organizationUuid}/cards/${uuid}`
+    );
 
     return res.data;
   },

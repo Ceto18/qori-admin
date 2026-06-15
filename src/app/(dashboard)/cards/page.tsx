@@ -12,6 +12,12 @@ import ConfirmModal from "@/shared/components/ui/modal/ConfirmModal";
 import CardTable from "@/modules/cards/components/CardTable";
 import { useCardStore } from "@/modules/cards/store/useCardStore";
 import { Card } from "@/modules/cards/types";
+import { organizationService } from "@/modules/organizations/services/organizationService";
+
+type Organization = {
+  uuid: string;
+  name?: string;
+};
 
 export default function CardsPage() {
   const router = useRouter();
@@ -27,22 +33,53 @@ export default function CardsPage() {
   } = useCardStore();
 
   const [search, setSearch] = useState("");
+  const [organizationUuid, setOrganizationUuid] = useState("");
+  const [loadingOrganization, setLoadingOrganization] = useState(true);
   const [cardToDelete, setCardToDelete] = useState<Card | null>(null);
 
   useEffect(() => {
-    fetchCards({
-      page: 1,
-      perPage,
-      search: "",
-    });
-  }, [fetchCards]);
+    const loadOrganization = async () => {
+      try {
+        setLoadingOrganization(true);
+
+        const response = await organizationService.getOrganizations({
+          page: 1,
+          per_page: 1,
+        });
+
+        const organization: Organization | null =
+          response.data?.data?.[0] ??
+          response.data?.[0] ??
+          response.data ??
+          null;
+
+        if (organization?.uuid) {
+          setOrganizationUuid(organization.uuid);
+
+          await fetchCards(organization.uuid, {
+            page: 1,
+            perPage,
+            search: "",
+          });
+        }
+      } catch (error) {
+        console.error("Error al cargar organización:", error);
+      } finally {
+        setLoadingOrganization(false);
+      }
+    };
+
+    loadOrganization();
+  }, [fetchCards, perPage]);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
   };
 
   const handleSearchSubmit = () => {
-    fetchCards({
+    if (!organizationUuid) return;
+
+    fetchCards(organizationUuid, {
       page: 1,
       perPage,
       search,
@@ -50,7 +87,9 @@ export default function CardsPage() {
   };
 
   const handlePageChange = (page: number) => {
-    fetchCards({
+    if (!organizationUuid) return;
+
+    fetchCards(organizationUuid, {
       page,
       perPage,
       search,
@@ -58,7 +97,9 @@ export default function CardsPage() {
   };
 
   const handlePerPageChange = (newPerPage: number) => {
-    fetchCards({
+    if (!organizationUuid) return;
+
+    fetchCards(organizationUuid, {
       page: 1,
       perPage: newPerPage,
       search,
@@ -78,13 +119,14 @@ export default function CardsPage() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!cardToDelete) return;
+    if (!cardToDelete || !organizationUuid) return;
 
     try {
-      await deleteCard(cardToDelete.uuid);
+      await deleteCard(organizationUuid, cardToDelete.uuid);
+
       setCardToDelete(null);
 
-      fetchCards({
+      await fetchCards(organizationUuid, {
         page: currentPage,
         perPage,
         search,
@@ -99,6 +141,22 @@ export default function CardsPage() {
 
     setCardToDelete(null);
   };
+
+  if (loadingOrganization) {
+    return (
+      <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-500 dark:border-white/[0.05] dark:bg-white/[0.03] dark:text-gray-400">
+        Cargando organización...
+      </div>
+    );
+  }
+
+  if (!organizationUuid) {
+    return (
+      <div className="rounded-xl border border-error-200 bg-error-50 p-6 text-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-400">
+        No se encontró una organización disponible para listar las tarjetas.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

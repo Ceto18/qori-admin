@@ -7,53 +7,100 @@ export type CardTemplateKey =
   | "minimal"
   | "premium";
 
-export type CardStatus = "active" | "inactive";
+export type SocialNetworkType = "email" | "url" | "phone" | string;
+
+export interface CardQuality {
+  name: string;
+}
+
+export interface CardNetwork {
+  red_social: string;
+  value: string;
+  label: string;
+
+  name?: string;
+  icon?: string | null;
+  type?: SocialNetworkType;
+}
 
 export interface Card {
   uuid: string;
-  full_name: string;
+
+  first_name?: string | null;
+  last_name?: string | null;
+  full_name?: string | null;
+
   position?: string | null;
   company?: string | null;
+  institution?: string | null;
   profession?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  whatsapp?: string | null;
-  website?: string | null;
   location?: string | null;
+  ubication?: string | null;
   bio?: string | null;
-  slug?: string | null;
-  template_key: CardTemplateKey;
+  description?: string | null;
+
+  design_id: string;
+
   primary_color?: string | null;
   secondary_color?: string | null;
+
   profile_image?: string | null;
   banner_image?: string | null;
-  status?: CardStatus;
+
+  photo_perfil_url?: string | null;
+  photo_banner_url?: string | null;
+
+  active?: boolean;
+
+  qualities?: CardQuality[];
+  documents?: string[];
+  networks?: CardNetwork[];
+
   created_at?: string;
   updated_at?: string;
 }
 
 export interface CardFormValues {
+  first_name: string;
+  last_name: string;
+
+  // Solo para previsualización
   full_name: string;
+
   position: string;
   company: string;
   profession: string;
-  email: string;
-  phone: string;
-  whatsapp: string;
-  website: string;
   location: string;
   bio: string;
-  slug: string;
-  template_key: CardTemplateKey;
+
+  design_id: string;
+
   primary_color: string;
   secondary_color: string;
-  status: CardStatus;
+
   profile_image?: File | null;
   banner_image?: File | null;
+
+  qualities: CardQuality[];
+  documents: Array<File | null>;
+  networks: CardNetwork[];
 }
 
 export interface CardTemplate {
+  id: string;
   key: CardTemplateKey;
   name: string;
   description: string;
+}
+
+export interface SocialNetwork {
+  uuid: string;
+  name: string;
+  icon: string | null;
+  type: SocialNetworkType;
+}
+
+export interface SocialNetworkOption {
+  label: string;
+  value: string;
 }

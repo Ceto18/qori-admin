@@ -4,33 +4,33 @@ import { CardTemplate } from "../types";
 
 export const CARD_TEMPLATES: CardTemplate[] = [
   {
-    id: 1,
+    id: "1",
     key: "classic",
     name: "Clásica",
-    description: "Diseño limpio y profesional.",
+    description: "Diseño profesional limpio y directo.",
   },
   {
-    id: 2,
+    id: "2",
     key: "modern",
     name: "Moderna",
-    description: "Diseño visual con banner destacado.",
+    description: "Diseño visual más llamativo y dinámico.",
   },
   {
-    id: 3,
+    id: "3",
     key: "corporate",
     name: "Corporativa",
-    description: "Ideal para empresas y ejecutivos.",
+    description: "Diseño sobrio para perfiles empresariales.",
   },
   {
-    id: 4,
+    id: "4",
     key: "minimal",
     name: "Minimalista",
-    description: "Simple, elegante y directa.",
+    description: "Diseño simple, claro y elegante.",
   },
   {
-    id: 5,
+    id: "5",
     key: "premium",
     name: "Premium",
-    description: "Diseño más llamativo y comercial.",
+    description: "Diseño elegante con mayor impacto visual.",
   },
 ];

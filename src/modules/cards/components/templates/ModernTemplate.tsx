@@ -1,13 +1,12 @@
 "use client";
 
 import {
+  BadgeCheck,
   Briefcase,
   Building2,
-  Globe,
-  Mail,
+  FileText,
+  Link2,
   MapPin,
-  MessageCircle,
-  Phone,
   UserRound,
 } from "lucide-react";
 
@@ -27,9 +26,24 @@ export default function ModernTemplate({
   const primaryColor = data.primary_color || "#2563eb";
   const secondaryColor = data.secondary_color || "#111827";
 
+  const qualities = data.qualities ?? [];
+  const documents = data.documents ?? [];
+  const networks = data.networks ?? [];
+
+  const filledQualities = qualities.filter((quality) => quality.name?.trim());
+
+  const filledDocuments = documents.filter(Boolean);
+
+  const filledNetworks = networks.filter(
+    (network) =>
+      network.red_social?.trim() ||
+      network.name?.trim() ||
+      network.link?.trim()
+  );
+
   return (
     <div
-      className="mx-auto w-full max-w-[390px] overflow-hidden rounded-[32px] p-[1.5px] shadow-xl"
+      className="mx-auto w-full min-w-[320px] max-w-[390px] overflow-hidden rounded-[32px] p-[1.5px] shadow-xl"
       style={{
         background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
       }}
@@ -79,27 +93,27 @@ export default function ModernTemplate({
               {data.position || "Cargo"}
             </p>
 
-            <p className="mt-1 text-xs text-gray-400">
-              {data.company || "Nombre de la empresa"}
-            </p>
+            {data.company && (
+              <p className="mt-1 text-xs text-gray-400">
+                {data.company}
+              </p>
+            )}
           </div>
 
           {/* QUICK ACTIONS */}
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <QuickAction
-              icon={<Phone size={18} />}
-              label="Llamar"
-              value={data.phone}
-              color={primaryColor}
-            />
-
-            <QuickAction
-              icon={<MessageCircle size={18} />}
-              label="WhatsApp"
-              value={data.whatsapp}
-              color={secondaryColor}
-            />
-          </div>
+          {filledNetworks.length > 0 && (
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              {filledNetworks.slice(0, 2).map((network, index) => (
+                <QuickNetworkAction
+                  key={`${network.red_social}-${index}`}
+                  name={network.name}
+                  icon={network.icon}
+                  link={network.link}
+                  color={index === 0 ? primaryColor : secondaryColor}
+                />
+              ))}
+            </div>
+          )}
 
           {/* TAGS */}
           <div className="mt-5 flex flex-wrap justify-center gap-2">
@@ -132,30 +146,12 @@ export default function ModernTemplate({
             </p>
           )}
 
-          {/* CONTACT INFO */}
+          {/* INFO */}
           <div className="mt-5 space-y-3">
             <InfoItem
               icon={<Building2 size={17} />}
               label="Empresa"
               value={data.company}
-            />
-
-            <InfoItem
-              icon={<Mail size={17} />}
-              label="Correo"
-              value={data.email}
-            />
-
-            <InfoItem
-              icon={<Phone size={17} />}
-              label="Teléfono"
-              value={data.phone}
-            />
-
-            <InfoItem
-              icon={<Globe size={17} />}
-              label="Sitio web"
-              value={data.website}
             />
 
             <InfoItem
@@ -165,22 +161,97 @@ export default function ModernTemplate({
             />
           </div>
 
-          {/* SECONDARY ACTIONS */}
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <ActionButton
-              icon={<Mail size={18} />}
-              label="Correo"
-              value={data.email}
-              color={primaryColor}
-            />
+          {/* QUALITIES */}
+          {filledQualities.length > 0 && (
+            <div className="mt-5">
+              <h4 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                <BadgeCheck size={14} />
+                Características
+              </h4>
 
-            <ActionButton
-              icon={<Globe size={18} />}
-              label="Web"
-              value={data.website}
-              color={secondaryColor}
-            />
-          </div>
+              <div className="flex flex-wrap gap-2">
+                {filledQualities.map((quality, index) => (
+                  <span
+                    key={`${quality.name}-${index}`}
+                    className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:bg-white/[0.06] dark:text-gray-300"
+                  >
+                    {quality.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* NETWORKS */}
+          {filledNetworks.length > 0 && (
+            <div className="mt-5">
+              <h4 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                <Link2 size={14} />
+                Redes sociales
+              </h4>
+
+              <div className="space-y-3">
+                {filledNetworks.map((network, index) => (
+                  <NetworkItem
+                    key={`${network.red_social}-${index}`}
+                    name={network.name}
+                    icon={network.icon}
+                    link={network.link}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* DOCUMENTS */}
+          {filledDocuments.length > 0 && (
+            <div className="mt-5">
+              <h4 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                <FileText size={14} />
+                Documentos
+              </h4>
+
+              <div className="space-y-3">
+                {filledDocuments.map((document, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 px-3 py-3 dark:border-white/[0.06] dark:bg-white/[0.04]"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-gray-500 shadow-sm dark:bg-gray-900 dark:text-gray-300">
+                      <FileText size={17} />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-gray-400">
+                        Documento
+                      </p>
+
+                      <p className="truncate text-sm font-semibold text-gray-700 dark:text-gray-200">
+                        {document instanceof File
+                          ? document.name
+                          : `Documento ${index + 1}`}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SECONDARY ACTIONS */}
+          {filledNetworks.length > 0 && (
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              {filledNetworks.slice(0, 2).map((network, index) => (
+                <ActionNetworkButton
+                  key={`${network.red_social}-action-${index}`}
+                  name={network.name}
+                  icon={network.icon}
+                  link={network.link}
+                  color={index === 0 ? primaryColor : secondaryColor}
+                />
+              ))}
+            </div>
+          )}
 
           <button
             type="button"
@@ -197,26 +268,26 @@ export default function ModernTemplate({
   );
 }
 
-function QuickAction({
+function QuickNetworkAction({
+  name,
   icon,
-  label,
-  value,
+  link,
   color,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value?: string;
+  name?: string;
+  icon?: string | null;
+  link?: string;
   color: string;
 }) {
   return (
     <button
       type="button"
-      disabled={!value}
+      disabled={!link}
       className="flex items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
       style={{ backgroundColor: color }}
     >
-      {icon}
-      {label}
+      <NetworkIcon icon={icon} name={name} compact />
+      <span className="truncate">{name || "Red"}</span>
     </button>
   );
 }
@@ -240,6 +311,7 @@ function InfoItem({
 
       <div className="min-w-0">
         <p className="text-xs font-medium text-gray-400">{label}</p>
+
         <p className="truncate text-sm font-semibold text-gray-700 dark:text-gray-200">
           {value}
         </p>
@@ -248,25 +320,93 @@ function InfoItem({
   );
 }
 
-function ActionButton({
+function NetworkItem({
+  name,
   icon,
-  label,
-  value,
+  link,
+}: {
+  name?: string;
+  icon?: string | null;
+  link?: string;
+}) {
+  if (!name && !link) return null;
+
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 px-3 py-3 dark:border-white/[0.06] dark:bg-white/[0.04]">
+      <NetworkIcon icon={icon} name={name} />
+
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-gray-400">
+          {name || "Red social"}
+        </p>
+
+        {link && (
+          <p className="truncate text-sm font-semibold text-gray-700 dark:text-gray-200">
+            {link}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ActionNetworkButton({
+  name,
+  icon,
+  link,
   color,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value?: string;
+  name?: string;
+  icon?: string | null;
+  link?: string;
   color: string;
 }) {
   return (
     <button
       type="button"
-      disabled={!value}
+      disabled={!link}
       className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-3 py-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-gray-200"
     >
-      <span style={{ color }}>{icon}</span>
-      {label}
+      <span style={{ color }}>
+        <NetworkIcon icon={icon} name={name} compact />
+      </span>
+
+      <span className="truncate">{name || "Red"}</span>
     </button>
+  );
+}
+
+function NetworkIcon({
+  icon,
+  name,
+  compact = false,
+}: {
+  icon?: string | null;
+  name?: string;
+  compact?: boolean;
+}) {
+  const sizeClass = compact ? "h-5 w-5" : "h-10 w-10";
+  const imageSizeClass = compact ? "h-4 w-4" : "h-5 w-5";
+
+  if (!icon) {
+    return (
+      <span
+        className={`flex ${sizeClass} shrink-0 items-center justify-center rounded-xl bg-white text-gray-500 shadow-sm dark:bg-gray-900 dark:text-gray-300`}
+      >
+        <Link2 size={compact ? 15 : 17} />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`flex ${sizeClass} shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-gray-900`}
+    >
+      <img
+        src={icon}
+        alt={name || "Red social"}
+        className={`${imageSizeClass} object-contain`}
+      />
+    </span>
   );
 }
