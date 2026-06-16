@@ -5,8 +5,8 @@ import { api } from "@/services/api";
 export type SocialNetwork = {
     uuid: string;
     name: string;
-    icon: string | null;
-    type: "email" | "url" | "phone" | string;
+    icon_url: string | null;
+    type?: "email" | "url" | "phone" | string;
 };
 
 export const socialNetworkService = {

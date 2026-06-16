@@ -36,46 +36,53 @@ export default function CardTable({
     {
       key: "full_name",
       header: "Nombre",
-      render: (card) => (
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-sm font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-300">
-            {card.profile_image ? (
-              <img
-                src={card.profile_image}
-                alt={card.full_name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              card.full_name?.charAt(0)?.toUpperCase() || "?"
-            )}
-          </div>
+      render: (card) => {
+        const fullName =
+          card.full_name ??
+          `${card.first_name ?? ""} ${card.last_name ?? ""}`.trim();
 
-          <div>
-            <p className="font-medium text-gray-800 dark:text-white/90">
-              {card.full_name}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {card.position || "Sin cargo"}
-            </p>
+        return (
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-sm font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-300">
+              {card.photo_perfil_url ? (
+                <img
+                  src={card.photo_perfil_url}
+                  alt={fullName || "Tarjeta"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                fullName?.charAt(0)?.toUpperCase() || "?"
+              )}
+            </div>
+
+            <div>
+              <p className="font-medium text-gray-800 dark:text-white/90">
+                {fullName || "-"}
+              </p>
+
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {card.position || "Sin cargo"}
+              </p>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
-      key: "company",
+      key: "institution",
       header: "Empresa",
       render: (card) => (
         <span className="text-gray-500 dark:text-gray-400">
-          {card.company || "-"}
+          {card.institution || "-"}
         </span>
       ),
     },
     {
-      key: "template_key",
+      key: "design_id",
       header: "Plantilla",
       render: (card) => (
         <Badge size="sm" color="info">
-          {getTemplateLabel(card.template_key)}
+          {getTemplateLabel(card.design_id)}
         </Badge>
       ),
     },
@@ -89,14 +96,11 @@ export default function CardTable({
       ),
     },
     {
-      key: "status",
+      key: "active",
       header: "Estado",
       render: (card) => (
-        <Badge
-          size="sm"
-          color={card.status === "inactive" ? "error" : "success"}
-        >
-          {card.status === "inactive" ? "Inactivo" : "Activo"}
+        <Badge size="sm" color={card.active ? "success" : "error"}>
+          {card.active ? "Activo" : "Inactivo"}
         </Badge>
       ),
     },
@@ -119,14 +123,14 @@ export default function CardTable({
   );
 }
 
-function getTemplateLabel(templateKey: string) {
+function getTemplateLabel(designId: string | number) {
   const labels: Record<string, string> = {
-    classic: "Clásica",
-    modern: "Moderna",
-    corporate: "Corporativa",
-    minimal: "Minimalista",
-    premium: "Premium",
+    "1": "Clásica",
+    "2": "Moderna",
+    "3": "Corporativa",
+    "4": "Minimalista",
+    "5": "Premium",
   };
 
-  return labels[templateKey] ?? templateKey;
+  return labels[String(designId)] ?? `Plantilla ${designId}`;
 }

@@ -1,5 +1,6 @@
 import Input from "@/shared/components/form/input/InputField";
 import TextArea from "@/shared/components/form/input/TextArea";
+
 import { CardFormValues } from "../../types";
 import FormField from "./FormField";
 
@@ -52,13 +53,13 @@ export default function MainDataSection({ form, updateField }: Props) {
                     />
                 </FormField>
 
-                <FormField label="Empresa">
+                <FormField label="Institución / Empresa">
                     <Input
                         type="text"
-                        value={form.company}
+                        value={form.institution}
                         placeholder="Ej. Myl Comunicaciones"
                         onChange={(e) =>
-                            updateField("company", e.target.value)
+                            updateField("institution", e.target.value)
                         }
                     />
                 </FormField>
@@ -66,7 +67,7 @@ export default function MainDataSection({ form, updateField }: Props) {
                 <FormField label="Profesión">
                     <Input
                         type="text"
-                        value={form.profession}
+                        value={form.position}
                         placeholder="Ej. Ingeniero de Sistemas"
                         onChange={(e) =>
                             updateField("profession", e.target.value)
@@ -77,10 +78,10 @@ export default function MainDataSection({ form, updateField }: Props) {
                 <FormField label="Ubicación">
                     <Input
                         type="text"
-                        value={form.location}
+                        value={form.ubication}
                         placeholder="Lima, Perú"
                         onChange={(e) =>
-                            updateField("location", e.target.value)
+                            updateField("ubication", e.target.value)
                         }
                     />
                 </FormField>
@@ -89,9 +90,11 @@ export default function MainDataSection({ form, updateField }: Props) {
                     <FormField label="Descripción">
                         <TextArea
                             rows={4}
-                            value={form.bio}
+                            value={form.description}
                             placeholder="Breve presentación profesional..."
-                            onChange={(value) => updateField("bio", value)}
+                            onChange={(value) =>
+                                updateField("description", value)
+                            }
                         />
                     </FormField>
                 </div>

@@ -34,25 +34,28 @@ const getInitialForm = (): CardFormValues => ({
     full_name: "",
 
     position: "",
-    company: "",
+    institution: "",
     profession: "",
-    location: "",
-    bio: "",
+    ubication: "",
+    description: "",
 
     design_id: DEFAULT_DESIGN_ID,
 
     primary_color: "#2563eb",
     secondary_color: "#111827",
 
-    profile_image: null,
-    banner_image: null,
+    photo_perfil: null,
+    photo_banner: null,
+
+    photo_perfil_url: "",
+    photo_banner_url: "",
 
     qualities: [{ name: "" }],
     documents: [],
 
     networks: [
         {
-            red_social: "",
+            uuid: "",
             value: "",
             label: "",
         },
@@ -98,30 +101,37 @@ export default function CardForm({
         const fullName =
             initialData.full_name ?? `${firstName} ${lastName}`.trim();
 
+        const profileImage = initialData.photo_perfil_url ?? "";
+        const bannerImage = initialData.photo_banner_url ?? "";
+
         setForm({
             first_name: firstName,
             last_name: lastName,
             full_name: fullName,
 
             position: initialData.position ?? "",
-            company: initialData.company ?? "",
+            institution: initialData.institution ?? "",
             profession: initialData.profession ?? "",
-            location: initialData.location ?? "",
-            bio: initialData.bio ?? "",
+            ubication: initialData.ubication ?? "",
+            description: initialData.description ?? "",
 
-            design_id: initialData.design_id ?? DEFAULT_DESIGN_ID,
+            design_id: String(initialData.design_id ?? DEFAULT_DESIGN_ID),
 
             primary_color: initialData.primary_color ?? "#2563eb",
             secondary_color: initialData.secondary_color ?? "#111827",
 
-            profile_image: null,
-            banner_image: null,
+            photo_perfil: null,
+            photo_banner: null,
+
+            photo_perfil_url: profileImage,
+            photo_banner_url: bannerImage,
 
             qualities:
                 initialData.qualities && initialData.qualities.length > 0
                     ? initialData.qualities.map((quality) => ({
-                          name: quality.name ?? "",
-                      }))
+                        uuid: quality.uuid,
+                        name: quality.name ?? "",
+                    }))
                     : [{ name: "" }],
 
             documents: [],
@@ -129,24 +139,24 @@ export default function CardForm({
             networks:
                 initialData.networks && initialData.networks.length > 0
                     ? initialData.networks.map((network) => ({
-                          red_social: network.red_social ?? "",
-                          value: network.value ?? "",
-                          label: network.label ?? "",
-                          name: network.name ?? "",
-                          icon: network.icon ?? null,
-                          type: network.type ?? "",
-                      }))
+                        uuid: network.uuid ?? "",
+                        value: network.value ?? "",
+                        label: network.label ?? "",
+                        name: network.name ?? "",
+                        icon_url: network.icon_url ?? null,
+                        type: network.type ?? "",
+                    }))
                     : [
-                          {
-                              red_social: "",
-                              value: "",
-                              label: "",
-                          },
-                      ],
+                        {
+                            uuid: "",
+                            value: "",
+                            label: "",
+                        },
+                    ],
         });
 
-        setProfilePreview(initialData.profile_image ?? "");
-        setBannerPreview(initialData.banner_image ?? "");
+        setProfilePreview(profileImage);
+        setBannerPreview(bannerImage);
     }, [initialData]);
 
     const updateField = <K extends keyof CardFormValues>(
@@ -174,7 +184,7 @@ export default function CardForm({
 
         if (!file) return;
 
-        updateField("profile_image", file);
+        updateField("photo_perfil", file);
         setProfilePreview(URL.createObjectURL(file));
     };
 
@@ -185,7 +195,7 @@ export default function CardForm({
 
         if (!file) return;
 
-        updateField("banner_image", file);
+        updateField("photo_banner", file);
         setBannerPreview(URL.createObjectURL(file));
     };
 
@@ -202,9 +212,9 @@ export default function CardForm({
             qualities: (prev.qualities ?? []).map((quality, qualityIndex) =>
                 qualityIndex === index
                     ? {
-                          ...quality,
-                          name: value,
-                      }
+                        ...quality,
+                        name: value,
+                    }
                     : quality
             ),
         }));
@@ -219,8 +229,8 @@ export default function CardForm({
                 qualities:
                     qualities.length > 1
                         ? qualities.filter(
-                              (_, qualityIndex) => qualityIndex !== index
-                          )
+                            (_, qualityIndex) => qualityIndex !== index
+                        )
                         : qualities,
             };
         });
@@ -264,7 +274,7 @@ export default function CardForm({
             networks: [
                 ...(prev.networks ?? []),
                 {
-                    red_social: "",
+                    uuid: "",
                     value: "",
                     label: "",
                 },
@@ -274,7 +284,7 @@ export default function CardForm({
 
     const updateNetwork = (
         index: number,
-        key: "red_social" | "value" | "label" | "name" | "icon" | "type",
+        key: "uuid" | "value" | "label" | "name" | "icon" | "icon_url" | "type",
         value: string
     ) => {
         setForm((prev) => ({
@@ -282,9 +292,9 @@ export default function CardForm({
             networks: (prev.networks ?? []).map((network, networkIndex) =>
                 networkIndex === index
                     ? {
-                          ...network,
-                          [key]: value,
-                      }
+                        ...network,
+                        [key]: value,
+                    }
                     : network
             ),
         }));
@@ -299,8 +309,8 @@ export default function CardForm({
                 networks:
                     networks.length > 1
                         ? networks.filter(
-                              (_, networkIndex) => networkIndex !== index
-                          )
+                            (_, networkIndex) => networkIndex !== index
+                        )
                         : networks,
             };
         });

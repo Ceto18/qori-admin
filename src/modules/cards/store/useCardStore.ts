@@ -63,28 +63,6 @@ const appendString = (
   formData.append(key, String(value));
 };
 
-const normalizeCard = (card: any): Card => {
-  const firstName = card.first_name ?? "";
-  const lastName = card.last_name ?? "";
-
-  return {
-    ...card,
-
-    first_name: firstName,
-    last_name: lastName,
-    full_name: card.full_name ?? `${firstName} ${lastName}`.trim(),
-
-    company: card.company ?? card.institution ?? "",
-    location: card.location ?? card.ubication ?? "",
-    bio: card.bio ?? card.description ?? "",
-
-    profile_image: card.profile_image ?? card.photo_perfil_url ?? "",
-    banner_image: card.banner_image ?? card.photo_banner_url ?? "",
-
-    active: card.active ?? true,
-  };
-};
-
 const buildCardFormData = (payload: CardFormValues) => {
   const formData = new FormData();
 
@@ -92,10 +70,10 @@ const buildCardFormData = (payload: CardFormValues) => {
   appendString(formData, "last_name", payload.last_name);
 
   appendString(formData, "position", payload.position);
-  appendString(formData, "institution", payload.company);
+  appendString(formData, "institution", payload.institution);
   appendString(formData, "profession", payload.profession);
-  appendString(formData, "ubication", payload.location);
-  appendString(formData, "description", payload.bio);
+  appendString(formData, "ubication", payload.ubication);
+  appendString(formData, "description", payload.description);
 
   appendString(formData, "design_id", payload.design_id);
 
@@ -104,12 +82,12 @@ const buildCardFormData = (payload: CardFormValues) => {
 
   formData.append("active", "true");
 
-  if (payload.profile_image instanceof File) {
-    formData.append("photo_perfil", payload.profile_image);
+  if (payload.photo_perfil instanceof File) {
+    formData.append("photo_perfil", payload.photo_perfil);
   }
 
-  if (payload.banner_image instanceof File) {
-    formData.append("photo_banner", payload.banner_image);
+  if (payload.photo_banner instanceof File) {
+    formData.append("photo_banner", payload.photo_banner);
   }
 
   payload.qualities?.forEach((quality, index) => {
@@ -125,13 +103,13 @@ const buildCardFormData = (payload: CardFormValues) => {
   });
 
   payload.networks?.forEach((network, index) => {
-    const redSocial = network.red_social?.trim() ?? "";
+    const uuid = network.uuid?.trim() ?? "";
     const value = network.value?.trim() ?? "";
     const label = network.label?.trim() ?? "";
 
-    if (!redSocial && !value && !label) return;
+    if (!uuid && !value && !label) return;
 
-    formData.append(`networks[${index}][red_social]`, redSocial);
+    formData.append(`networks[${index}][red_social]`, uuid);
     formData.append(`networks[${index}][value]`, value);
     formData.append(`networks[${index}][label]`, label);
   });
@@ -160,7 +138,7 @@ export const useCardStore = create<CardState>((set, get) => ({
     try {
       set({ loading: true });
 
-      if (!organizationUuid) {
+      if (!organizationUuid || typeof organizationUuid !== "string") {
         throw new Error("No se encontró el UUID de la organización.");
       }
 
@@ -172,10 +150,8 @@ export const useCardStore = create<CardState>((set, get) => ({
         search,
       });
 
-      const cards = response.data?.data ?? [];
-
       set({
-        cards: cards.map(normalizeCard),
+        cards: response.data?.data ?? [],
         currentPage: response.data?.current_page ?? 1,
         totalPages: response.data?.last_page ?? 1,
         perPage: Number(response.data?.per_page ?? perPage),
@@ -193,7 +169,7 @@ export const useCardStore = create<CardState>((set, get) => ({
     try {
       set({ loading: true });
 
-      if (!organizationUuid) {
+      if (!organizationUuid || typeof organizationUuid !== "string") {
         throw new Error("No se encontró el UUID de la organización.");
       }
 
@@ -202,7 +178,7 @@ export const useCardStore = create<CardState>((set, get) => ({
       }
 
       const response = await cardService.getCard(organizationUuid, uuid);
-      const card = response.data ? normalizeCard(response.data) : null;
+      const card = response.data ?? null;
 
       set({ selectedCard: card });
 
@@ -220,7 +196,7 @@ export const useCardStore = create<CardState>((set, get) => ({
     try {
       set({ saving: true });
 
-      if (!organizationUuid) {
+      if (!organizationUuid || typeof organizationUuid !== "string") {
         throw new Error("No se encontró el UUID de la organización.");
       }
 
@@ -248,7 +224,7 @@ export const useCardStore = create<CardState>((set, get) => ({
     try {
       set({ saving: true });
 
-      if (!organizationUuid) {
+      if (!organizationUuid || typeof organizationUuid !== "string") {
         throw new Error("No se encontró el UUID de la organización.");
       }
 
@@ -276,7 +252,7 @@ export const useCardStore = create<CardState>((set, get) => ({
     try {
       set({ deleting: true });
 
-      if (!organizationUuid) {
+      if (!organizationUuid || typeof organizationUuid !== "string") {
         throw new Error("No se encontró el UUID de la organización.");
       }
 

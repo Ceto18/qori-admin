@@ -13,7 +13,7 @@ interface Props {
     onAdd: () => void;
     onUpdate: (
         index: number,
-        key: "red_social" | "value" | "label" | "name" | "icon" | "type",
+        key: "uuid" | "value" | "label" | "name" | "icon" | "type",
         value: string
     ) => void;
     onRemove: (index: number) => void;
@@ -36,9 +36,9 @@ export default function NetworksSection({
             (network) => network.uuid === value
         );
 
-        onUpdate(index, "red_social", value);
+        onUpdate(index, "uuid", value);
         onUpdate(index, "name", selectedNetwork?.name ?? "");
-        onUpdate(index, "icon", selectedNetwork?.icon ?? "");
+        onUpdate(index, "icon", selectedNetwork?.icon_url ?? "");
         onUpdate(index, "type", selectedNetwork?.type ?? "");
     };
 
@@ -98,11 +98,9 @@ export default function NetworksSection({
                             <FormField label="Red social">
                                 <Select
                                     placeholder="Seleccionar"
-                                    defaultValue={network.red_social}
+                                    defaultValue={network.uuid}
                                     options={socialNetworkOptions}
-                                    onChange={(value) =>
-                                        handleNetworkChange(index, value)
-                                    }
+                                    onChange={(value) => handleNetworkChange(index, value)}
                                 />
                             </FormField>
 

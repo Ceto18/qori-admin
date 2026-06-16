@@ -10,16 +10,18 @@ export type CardTemplateKey =
 export type SocialNetworkType = "email" | "url" | "phone" | string;
 
 export interface CardQuality {
+  uuid?: string;
   name: string;
 }
 
 export interface CardNetwork {
-  red_social: string;
+  uuid: string;
   value: string;
   label: string;
 
   name?: string;
   icon?: string | null;
+  icon_url?: string | null;
   type?: SocialNetworkType;
 }
 
@@ -31,21 +33,15 @@ export interface Card {
   full_name?: string | null;
 
   position?: string | null;
-  company?: string | null;
   institution?: string | null;
   profession?: string | null;
-  location?: string | null;
   ubication?: string | null;
-  bio?: string | null;
   description?: string | null;
 
-  design_id: string;
+  design_id: string | number;
 
   primary_color?: string | null;
   secondary_color?: string | null;
-
-  profile_image?: string | null;
-  banner_image?: string | null;
 
   photo_perfil_url?: string | null;
   photo_banner_url?: string | null;
@@ -68,18 +64,23 @@ export interface CardFormValues {
   full_name: string;
 
   position: string;
-  company: string;
+  institution: string;
   profession: string;
-  location: string;
-  bio: string;
+  ubication: string;
+  description: string;
 
   design_id: string;
 
   primary_color: string;
   secondary_color: string;
 
-  profile_image?: File | null;
-  banner_image?: File | null;
+  // Archivos que se envían al backend
+  photo_perfil?: File | null;
+  photo_banner?: File | null;
+
+  // URLs que devuelve el backend para edición / preview
+  photo_perfil_url?: string | null;
+  photo_banner_url?: string | null;
 
   qualities: CardQuality[];
   documents: Array<File | null>;
@@ -96,8 +97,8 @@ export interface CardTemplate {
 export interface SocialNetwork {
   uuid: string;
   name: string;
-  icon: string | null;
-  type: SocialNetworkType;
+  icon_url: string | null;
+  type?: SocialNetworkType;
 }
 
 export interface SocialNetworkOption {
