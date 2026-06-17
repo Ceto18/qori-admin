@@ -108,7 +108,7 @@ export default function CardTable({
         },
         {
             key: "active",
-            header: "Estado",
+            header: "Habilitado",
             render: (card) => (
                 <Switch
                     checked={Boolean(card.active)}

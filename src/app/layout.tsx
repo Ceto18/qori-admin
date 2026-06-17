@@ -12,6 +12,11 @@ const outfit = Outfit({
 export const metadata = {
     title: "Qori Admin",
     description: "Panel administrativo Qori",
+    icons: {
+        icon: "/images/logo/qori-logo.png",
+        shortcut: "/images/logo/qori-logo.png",
+        apple: "/images/logo/qori-logo.png",
+    },
 };
 
 export default function RootLayout({

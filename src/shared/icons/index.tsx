@@ -53,6 +53,9 @@ import MoreDotIcon from "./more-dot.svg";
 import BellIcon from "./bell.svg";
 import Building2Icon from "./building-2.svg";
 import WalletIcon from "./wallet-cards.svg";
+import PlansIcon from "./notepad-text.svg";
+import CreditCardIcon from "./credit-card.svg";
+import DiscountCodeIcon from "./ticket-percent.svg";
 
 export {
   DownloadIcon,
@@ -110,4 +113,7 @@ export {
   ChatIcon,
   Building2Icon,
   WalletIcon,
+  PlansIcon,
+  CreditCardIcon,
+  DiscountCodeIcon,
 };
