@@ -60,6 +60,21 @@ export const cardService = {
     return res.data;
   },
 
+  toggleCardState: async (
+    organizationUuid: string,
+    cardUuid: string,
+    state: boolean
+  ) => {
+    const res = await api.put(
+      `/organization/${organizationUuid}/cards/state/${cardUuid}`,
+      {
+        state,
+      }
+    );
+
+    return res.data;
+  },
+
   deleteCard: async (organizationUuid: string, uuid: string) => {
     const res = await api.delete(
       `/organization/${organizationUuid}/cards/${uuid}`

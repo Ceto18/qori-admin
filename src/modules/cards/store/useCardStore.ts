@@ -4,10 +4,27 @@ import { create } from "zustand";
 import { cardService } from "../services/cardService";
 import { Card, CardFormValues } from "../types";
 
+import { showSuccess } from "@/shared/utils/toast";
+import { handleApiError } from "@/shared/utils/handleApiError";
+
 type FetchCardsParams = {
   page?: number;
   perPage?: number;
   search?: string;
+};
+
+type NetworkFormValue = {
+  uuid?: string;
+  red_social?: string;
+  red_social_uuid?: string;
+  value?: string;
+  label?: string;
+  type?: {
+    uuid?: string;
+    name?: string;
+    type?: string;
+    icon_url?: string | null;
+  };
 };
 
 interface CardState {
@@ -102,23 +119,27 @@ const buildCardFormData = (payload: CardFormValues) => {
     formData.append(`documents[${index}]`, document);
   });
 
-  payload.networks?.forEach((network, index) => {
-    const uuid = network.uuid?.trim() ?? "";
+  payload.networks?.forEach((item, index) => {
+    const network = item as NetworkFormValue;
+
+    const redSocialUuid =
+      network.type?.uuid?.trim() ??
+      network.red_social?.trim() ??
+      network.red_social_uuid?.trim() ??
+      network.uuid?.trim() ??
+      "";
+
     const value = network.value?.trim() ?? "";
     const label = network.label?.trim() ?? "";
 
-    if (!uuid && !value && !label) return;
+    if (!redSocialUuid && !value && !label) return;
 
-    formData.append(`networks[${index}][red_social]`, uuid);
+    formData.append(`networks[${index}][red_social]`, redSocialUuid);
     formData.append(`networks[${index}][value]`, value);
     formData.append(`networks[${index}][label]`, label);
   });
 
   return formData;
-};
-
-const handleApiError = (error: unknown) => {
-  console.error("API ERROR:", error);
 };
 
 export const useCardStore = create<CardState>((set, get) => ({
@@ -206,7 +227,9 @@ export const useCardStore = create<CardState>((set, get) => ({
 
       const formData = buildCardFormData(payload);
 
-      await cardService.createCard(organizationUuid, formData);
+      const response = await cardService.createCard(organizationUuid, formData);
+
+      showSuccess(response?.message ?? "Tarjeta creada correctamente.");
     } catch (error) {
       console.error("Error createCard:", error);
       handleApiError(error);
@@ -238,7 +261,13 @@ export const useCardStore = create<CardState>((set, get) => ({
 
       const formData = buildCardFormData(payload);
 
-      await cardService.updateCard(organizationUuid, uuid, formData);
+      const response = await cardService.updateCard(
+        organizationUuid,
+        uuid,
+        formData
+      );
+
+      showSuccess(response?.message ?? "Tarjeta actualizada correctamente.");
     } catch (error) {
       console.error("Error updateCard:", error);
       handleApiError(error);
@@ -260,7 +289,9 @@ export const useCardStore = create<CardState>((set, get) => ({
         throw new Error("No se encontró el UUID de la tarjeta.");
       }
 
-      await cardService.deleteCard(organizationUuid, uuid);
+      const response = await cardService.deleteCard(organizationUuid, uuid);
+
+      showSuccess(response?.message ?? "Tarjeta eliminada correctamente.");
 
       set((state) => ({
         cards: state.cards.filter((card) => card.uuid !== uuid),

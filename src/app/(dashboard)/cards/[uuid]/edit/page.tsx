@@ -4,16 +4,90 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Alert, Spin } from "antd";
 
 import CardForm from "@/modules/cards/components/CardForm";
 import { useCardStore } from "@/modules/cards/store/useCardStore";
 import { CardFormValues } from "@/modules/cards/types";
 import { organizationService } from "@/modules/organizations/services/organizationService";
+import { handleApiError } from "@/shared/utils/handleApiError";
 
 type Organization = {
   uuid: string;
   name?: string;
 };
+
+function CardEditInitialLoading() {
+  return (
+    <div className="flex min-h-[300px] items-center justify-center rounded-xl border border-gray-200 bg-white p-6 dark:border-white/[0.05] dark:bg-white/[0.03]">
+      <div className="flex flex-col items-center gap-4">
+        <Spin size="large" />
+
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+          Cargando tarjeta...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function CardEditSavingOverlay() {
+  return (
+    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/75 dark:bg-gray-950/70">
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-gray-200 bg-white px-6 py-5 shadow-sm dark:border-white/[0.08] dark:bg-gray-900">
+        <Spin size="large" />
+
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+          Guardando cambios...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function CardEditErrorMessage({ message }: { message: string }) {
+  return (
+    <Alert
+      message={message}
+      type="error"
+      showIcon
+      className="
+        rounded-xl
+        border-error-200
+        bg-error-50
+        text-error-600
+        shadow-none
+        dark:border-error-500/20
+        dark:bg-error-500/10
+        dark:text-error-400
+        [&_.ant-alert-message]:text-error-600
+        dark:[&_.ant-alert-message]:text-error-400
+      "
+    />
+  );
+}
+
+function CardEditWarningMessage({ message }: { message: string }) {
+  return (
+    <Alert
+      message={message}
+      type="warning"
+      showIcon
+      className="
+        rounded-xl
+        border-warning-200
+        bg-warning-50
+        text-warning-700
+        shadow-none
+        dark:border-warning-500/20
+        dark:bg-warning-500/10
+        dark:text-warning-400
+        [&_.ant-alert-message]:text-warning-700
+        dark:[&_.ant-alert-message]:text-warning-400
+      "
+    />
+  );
+}
 
 export default function EditCardPage() {
   const router = useRouter();
@@ -58,6 +132,7 @@ export default function EditCardPage() {
         }
       } catch (error) {
         console.error("Error al cargar organización o tarjeta:", error);
+        handleApiError(error);
       } finally {
         setLoadingOrganization(false);
       }
@@ -71,40 +146,36 @@ export default function EditCardPage() {
   }, [uuid, fetchCard, clearSelectedCard]);
 
   const handleSubmit = async (values: CardFormValues) => {
-    if (!organizationUuid) {
-      throw new Error("No se encontró el UUID de la organización.");
+    try {
+      if (!organizationUuid) {
+        throw new Error("No se encontró el UUID de la organización.");
+      }
+
+      if (!uuid) {
+        throw new Error("No se encontró el UUID de la tarjeta.");
+      }
+
+      await updateCard(organizationUuid, uuid, values);
+
+      router.push("/cards");
+    } catch (error) {
+      console.error("Error al actualizar tarjeta:", error);
     }
-
-    if (!uuid) {
-      throw new Error("No se encontró el UUID de la tarjeta.");
-    }
-
-    await updateCard(organizationUuid, uuid, values);
-
-    router.push("/cards");
   };
 
   if (loadingOrganization || (loading && !selectedCard)) {
-    return (
-      <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-500 dark:border-white/[0.05] dark:bg-white/[0.03] dark:text-gray-400">
-        Cargando tarjeta...
-      </div>
-    );
+    return <CardEditInitialLoading />;
   }
 
   if (!organizationUuid) {
     return (
-      <div className="rounded-xl border border-error-200 bg-error-50 p-6 text-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-400">
-        No se encontró una organización disponible para editar la tarjeta.
-      </div>
+      <CardEditErrorMessage message="No se encontró una organización disponible para editar la tarjeta." />
     );
   }
 
   if (!selectedCard) {
     return (
-      <div className="rounded-xl border border-warning-200 bg-warning-50 p-6 text-sm text-warning-700 dark:border-warning-500/20 dark:bg-warning-500/10 dark:text-warning-400">
-        No se encontró la tarjeta solicitada.
-      </div>
+      <CardEditWarningMessage message="No se encontró la tarjeta solicitada." />
     );
   }
 
@@ -120,11 +191,15 @@ export default function EditCardPage() {
         </p>
       </div>
 
-      <CardForm
-        initialData={selectedCard}
-        loading={saving}
-        onSubmit={handleSubmit}
-      />
+      <div className="relative">
+        {saving && <CardEditSavingOverlay />}
+
+        <CardForm
+          initialData={selectedCard}
+          loading={saving}
+          onSubmit={handleSubmit}
+        />
+      </div>
     </div>
   );
 }

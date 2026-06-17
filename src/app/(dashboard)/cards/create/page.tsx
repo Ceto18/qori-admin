@@ -9,6 +9,7 @@ import CardForm from "@/modules/cards/components/CardForm";
 import { useCardStore } from "@/modules/cards/store/useCardStore";
 import { CardFormValues } from "@/modules/cards/types";
 import { organizationService } from "@/modules/organizations/services/organizationService";
+import { handleApiError } from "@/shared/utils/handleApiError";
 
 type Organization = {
     uuid: string;
@@ -44,6 +45,7 @@ export default function CreateCardPage() {
                 }
             } catch (error) {
                 console.error("Error al cargar organización:", error);
+                handleApiError(error);
             } finally {
                 setLoadingOrganization(false);
             }
@@ -53,13 +55,17 @@ export default function CreateCardPage() {
     }, []);
 
     const handleSubmit = async (values: CardFormValues) => {
-        if (!organizationUuid) {
-            throw new Error("No se encontró el UUID de la organización.");
+        try {
+            if (!organizationUuid) {
+                throw new Error("No se encontró el UUID de la organización.");
+            }
+
+            await createCard(organizationUuid, values);
+
+            router.push("/cards");
+        } catch (error) {
+            console.error("Error al crear tarjeta:", error);
         }
-
-        await createCard(organizationUuid, values);
-
-        // router.push("/cards");
     };
 
     if (loadingOrganization) {

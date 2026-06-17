@@ -64,7 +64,7 @@ export default function MainDataSection({ form, updateField }: Props) {
                     />
                 </FormField>
 
-                <FormField label="Profesión">
+                {/* <FormField label="Profesión">
                     <Input
                         type="text"
                         value={form.position}
@@ -73,7 +73,7 @@ export default function MainDataSection({ form, updateField }: Props) {
                             updateField("profession", e.target.value)
                         }
                     />
-                </FormField>
+                </FormField> */}
 
                 <FormField label="Ubicación">
                     <Input

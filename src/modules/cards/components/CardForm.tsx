@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CARD_TEMPLATES } from "../constants/cardTemplates";
 import { Card, CardFormValues } from "../types";
@@ -104,6 +104,9 @@ export default function CardForm({
         const profileImage = initialData.photo_perfil_url ?? "";
         const bannerImage = initialData.photo_banner_url ?? "";
 
+        setProfilePreview(profileImage);
+        setBannerPreview(bannerImage);
+
         setForm({
             first_name: firstName,
             last_name: lastName,
@@ -129,9 +132,9 @@ export default function CardForm({
             qualities:
                 initialData.qualities && initialData.qualities.length > 0
                     ? initialData.qualities.map((quality) => ({
-                        uuid: quality.uuid,
-                        name: quality.name ?? "",
-                    }))
+                          uuid: quality.uuid,
+                          name: quality.name ?? "",
+                      }))
                     : [{ name: "" }],
 
             documents: [],
@@ -139,25 +142,42 @@ export default function CardForm({
             networks:
                 initialData.networks && initialData.networks.length > 0
                     ? initialData.networks.map((network) => ({
-                        uuid: network.uuid ?? "",
-                        value: network.value ?? "",
-                        label: network.label ?? "",
-                        name: network.name ?? "",
-                        icon_url: network.icon_url ?? null,
-                        type: network.type ?? "",
-                    }))
+                          uuid: network.uuid ?? "",
+                          value: network.value ?? "",
+                          label: network.label ?? "",
+                          name: network.name ?? "",
+                          icon_url: network.icon_url ?? null,
+                          type: network.type ?? "",
+                      }))
                     : [
-                        {
-                            uuid: "",
-                            value: "",
-                            label: "",
-                        },
-                    ],
+                          {
+                              uuid: "",
+                              value: "",
+                              label: "",
+                          },
+                      ],
         });
+    }, [
+        initialData?.uuid,
+        initialData?.photo_perfil_url,
+        initialData?.photo_banner_url,
+    ]);
 
-        setProfilePreview(profileImage);
-        setBannerPreview(bannerImage);
-    }, [initialData]);
+    const resolvedProfilePreview = useMemo(() => {
+        if (form.photo_perfil instanceof File) {
+            return profilePreview;
+        }
+
+        return form.photo_perfil_url ?? "";
+    }, [form.photo_perfil, form.photo_perfil_url, profilePreview]);
+
+    const resolvedBannerPreview = useMemo(() => {
+        if (form.photo_banner instanceof File) {
+            return bannerPreview;
+        }
+
+        return form.photo_banner_url ?? "";
+    }, [form.photo_banner, form.photo_banner_url, bannerPreview]);
 
     const updateField = <K extends keyof CardFormValues>(
         key: K,
@@ -212,9 +232,9 @@ export default function CardForm({
             qualities: (prev.qualities ?? []).map((quality, qualityIndex) =>
                 qualityIndex === index
                     ? {
-                        ...quality,
-                        name: value,
-                    }
+                          ...quality,
+                          name: value,
+                      }
                     : quality
             ),
         }));
@@ -229,8 +249,8 @@ export default function CardForm({
                 qualities:
                     qualities.length > 1
                         ? qualities.filter(
-                            (_, qualityIndex) => qualityIndex !== index
-                        )
+                              (_, qualityIndex) => qualityIndex !== index
+                          )
                         : qualities,
             };
         });
@@ -284,7 +304,7 @@ export default function CardForm({
 
     const updateNetwork = (
         index: number,
-        key: "uuid" | "value" | "label" | "name" | "icon" | "icon_url" | "type",
+        key: "uuid" | "value" | "label" | "name" | "icon_url" | "type",
         value: string
     ) => {
         setForm((prev) => ({
@@ -292,9 +312,9 @@ export default function CardForm({
             networks: (prev.networks ?? []).map((network, networkIndex) =>
                 networkIndex === index
                     ? {
-                        ...network,
-                        [key]: value,
-                    }
+                          ...network,
+                          [key]: value,
+                      }
                     : network
             ),
         }));
@@ -309,8 +329,8 @@ export default function CardForm({
                 networks:
                     networks.length > 1
                         ? networks.filter(
-                            (_, networkIndex) => networkIndex !== index
-                        )
+                              (_, networkIndex) => networkIndex !== index
+                          )
                         : networks,
             };
         });
@@ -382,9 +402,10 @@ export default function CardForm({
             </div>
 
             <CardPreview
+                key={`${initialData?.uuid ?? "new"}-${form.photo_perfil_url}-${form.photo_banner_url}`}
                 data={form}
-                profilePreview={profilePreview}
-                bannerPreview={bannerPreview}
+                profilePreview={resolvedProfilePreview}
+                bannerPreview={resolvedBannerPreview}
             />
         </form>
     );

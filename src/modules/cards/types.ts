@@ -14,15 +14,27 @@ export interface CardQuality {
   name: string;
 }
 
+export interface CardNetworkType {
+  uuid: string;
+  name: string;
+  type?: SocialNetworkType;
+  icon_url: string | null;
+}
+
 export interface CardNetwork {
   uuid: string;
+
   value: string;
   label: string;
+
+  red_social?: string;
+  red_social_uuid?: string;
 
   name?: string;
   icon?: string | null;
   icon_url?: string | null;
-  type?: SocialNetworkType;
+
+  type?: CardNetworkType;
 }
 
 export interface Card {

@@ -13,8 +13,16 @@ interface Props {
     onAdd: () => void;
     onUpdate: (
         index: number,
-        key: "uuid" | "value" | "label" | "name" | "icon" | "type",
-        value: string
+        key:
+            | "uuid"
+            | "value"
+            | "label"
+            | "name"
+            | "icon_url"
+            | "type"
+            | "red_social"
+            | "red_social_uuid",
+        value: string | CardNetwork["type"]
     ) => void;
     onRemove: (index: number) => void;
 }
@@ -31,15 +39,89 @@ export default function NetworksSection({
         value: network.uuid,
     }));
 
+    const findSocialNetworkValue = (network: CardNetwork) => {
+        const typeUuid =
+            typeof network.type === "object" ? network.type?.uuid : "";
+
+        const directValue =
+            typeUuid ||
+            network.red_social ||
+            network.red_social_uuid ||
+            "";
+
+        if (
+            directValue &&
+            socialNetworks.some((social) => social.uuid === directValue)
+        ) {
+            return directValue;
+        }
+
+        if (
+            network.uuid &&
+            socialNetworks.some((social) => social.uuid === network.uuid)
+        ) {
+            return network.uuid;
+        }
+
+        if (network.name) {
+            const byName = socialNetworks.find(
+                (social) =>
+                    social.name.toLowerCase() === network.name?.toLowerCase()
+            );
+
+            if (byName) return byName.uuid;
+        }
+
+        if (typeof network.type === "string") {
+            const byType = socialNetworks.find(
+                (social) => social.type === network.type
+            );
+
+            if (byType) return byType.uuid;
+        }
+
+        if (typeof network.type === "object" && network.type?.name) {
+            const byTypeName = socialNetworks.find(
+                (social) =>
+                    social.name.toLowerCase() ===
+                    network.type?.name?.toLowerCase()
+            );
+
+            if (byTypeName) return byTypeName.uuid;
+        }
+
+        return "";
+    };
+
     const handleNetworkChange = (index: number, value: string) => {
         const selectedNetwork = socialNetworks.find(
             (network) => network.uuid === value
         );
 
         onUpdate(index, "uuid", value);
+        onUpdate(index, "red_social", value);
+        onUpdate(index, "red_social_uuid", value);
         onUpdate(index, "name", selectedNetwork?.name ?? "");
-        onUpdate(index, "icon", selectedNetwork?.icon_url ?? "");
-        onUpdate(index, "type", selectedNetwork?.type ?? "");
+        onUpdate(index, "icon_url", selectedNetwork?.icon_url ?? "");
+
+        onUpdate(
+            index,
+            "type",
+            selectedNetwork
+                ? {
+                      uuid: selectedNetwork.uuid,
+                      name: selectedNetwork.name,
+                      type: selectedNetwork.type,
+                      icon_url: selectedNetwork.icon_url,
+                  }
+                : undefined
+        );
+    };
+
+    const getNetworkType = (network: CardNetwork) => {
+        if (typeof network.type === "string") return network.type;
+
+        return network.type?.type ?? "";
     };
 
     const getValuePlaceholder = (type?: string) => {
@@ -74,70 +156,77 @@ export default function NetworksSection({
             </div>
 
             <div className="mt-5 space-y-4">
-                {networks.map((network, index) => (
-                    <div
-                        key={index}
-                        className="rounded-xl border border-gray-200 p-4 dark:border-white/[0.08]"
-                    >
-                        <div className="mb-4 flex items-center justify-between gap-3">
-                            <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">
-                                Red social {index + 1}
-                            </h3>
+                {networks.map((network, index) => {
+                    const selectedValue = findSocialNetworkValue(network);
 
-                            <button
-                                type="button"
-                                onClick={() => onRemove(index)}
-                                disabled={networks.length === 1}
-                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-error-300 hover:text-error-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.08] dark:text-gray-400"
-                            >
-                                <Trash2 size={16} />
-                            </button>
+                    return (
+                        <div
+                            key={index}
+                            className="rounded-xl border border-gray-200 p-4 dark:border-white/[0.08]"
+                        >
+                            <div className="mb-4 flex items-center justify-between gap-3">
+                                <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">
+                                    Red social {index + 1}
+                                </h3>
+
+                                <button
+                                    type="button"
+                                    onClick={() => onRemove(index)}
+                                    disabled={networks.length === 1}
+                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-error-300 hover:text-error-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.08] dark:text-gray-400"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <FormField label="Red social">
+                                    <Select
+                                        key={`${index}-${selectedValue}-${socialNetworks.length}`}
+                                        placeholder="Seleccionar"
+                                        defaultValue={selectedValue}
+                                        options={socialNetworkOptions}
+                                        onChange={(value) =>
+                                            handleNetworkChange(index, value)
+                                        }
+                                    />
+                                </FormField>
+
+                                <FormField label="Valor">
+                                    <Input
+                                        type="text"
+                                        value={network.value}
+                                        placeholder={getValuePlaceholder(
+                                            getNetworkType(network)
+                                        )}
+                                        onChange={(e) =>
+                                            onUpdate(
+                                                index,
+                                                "value",
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+                                </FormField>
+
+                                <FormField label="Etiqueta">
+                                    <Input
+                                        type="text"
+                                        value={network.label}
+                                        placeholder="Ej. personal, trabajo, empresa"
+                                        onChange={(e) =>
+                                            onUpdate(
+                                                index,
+                                                "label",
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+                                </FormField>
+                            </div>
                         </div>
-
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                            <FormField label="Red social">
-                                <Select
-                                    placeholder="Seleccionar"
-                                    defaultValue={network.uuid}
-                                    options={socialNetworkOptions}
-                                    onChange={(value) => handleNetworkChange(index, value)}
-                                />
-                            </FormField>
-
-                            <FormField label="Valor">
-                                <Input
-                                    type="text"
-                                    value={network.value}
-                                    placeholder={getValuePlaceholder(
-                                        network.type
-                                    )}
-                                    onChange={(e) =>
-                                        onUpdate(
-                                            index,
-                                            "value",
-                                            e.target.value
-                                        )
-                                    }
-                                />
-                            </FormField>
-
-                            <FormField label="Etiqueta">
-                                <Input
-                                    type="text"
-                                    value={network.label}
-                                    placeholder="Ej. personal, trabajo, empresa"
-                                    onChange={(e) =>
-                                        onUpdate(
-                                            index,
-                                            "label",
-                                            e.target.value
-                                        )
-                                    }
-                                />
-                            </FormField>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </section>
     );
