@@ -13,6 +13,7 @@ import {
   WalletIcon,
   CreditCardIcon,
   DiscountCodeIcon,
+  MembershipPlansIcon
 } from "@/shared/icons/index";
 
 type NavItem = {
@@ -33,6 +34,11 @@ const navItems: NavItem[] = [
     icon: <GridIcon />,
     name: "Inicio",
     path: "/",
+  },
+  {
+    icon: <MembershipPlansIcon />,
+    name: "Membresia",
+    path: "/membership",
   },
   {
     icon: <Building2Icon />,

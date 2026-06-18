@@ -56,6 +56,7 @@ import WalletIcon from "./wallet-cards.svg";
 import PlansIcon from "./notepad-text.svg";
 import CreditCardIcon from "./credit-card.svg";
 import DiscountCodeIcon from "./ticket-percent.svg";
+import MembershipPlansIcon from "./shield-check.svg"
 
 export {
   DownloadIcon,
@@ -116,4 +117,5 @@ export {
   PlansIcon,
   CreditCardIcon,
   DiscountCodeIcon,
+  MembershipPlansIcon
 };
