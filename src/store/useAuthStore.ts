@@ -21,10 +21,6 @@ export const useAuthStore = create<AuthState>()(
           user,
           token,
         });
-
-        if (typeof window !== "undefined") {
-          localStorage.setItem("token", token);
-        }
       },
 
       logout: () => {
@@ -34,8 +30,6 @@ export const useAuthStore = create<AuthState>()(
         });
 
         if (typeof window !== "undefined") {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
           localStorage.removeItem("auth-storage");
 
           window.location.href = "/signin";

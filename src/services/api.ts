@@ -1,8 +1,8 @@
-import axios from "axios";
+import axios, { AxiosHeaders } from "axios";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export const api = axios.create({
-  baseURL: "/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {
     Accept: "application/json",
   },
@@ -19,22 +19,16 @@ const isAuthUrl = (url: string) => {
 
 api.interceptors.request.use((config) => {
   const url = config.url ?? "";
-
   const isAuthRequest = isAuthUrl(url);
 
+  const headers = AxiosHeaders.from(config.headers);
+  config.headers = headers;
+
+  headers.set("Accept", "application/json");
+
   if (isAuthRequest) {
-    if (config.headers) {
-      delete config.headers.Authorization;
-    }
-
-    console.log("TOKEN FINAL: auth request sin token");
-
-    if (config.data instanceof FormData) {
-      delete config.headers["Content-Type"];
-    } else {
-      config.headers["Content-Type"] = "application/json";
-    }
-
+    headers.delete("Authorization");
+    headers.set("Content-Type", "application/json");
     return config;
   }
 
@@ -54,16 +48,16 @@ api.interceptors.request.use((config) => {
     }
   }
 
-  console.log("TOKEN FINAL:", token);
-
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    headers.set("Authorization", `Bearer ${token}`);
+  } else {
+    headers.delete("Authorization");
   }
 
   if (config.data instanceof FormData) {
-    delete config.headers["Content-Type"];
+    headers.delete("Content-Type");
   } else {
-    config.headers["Content-Type"] = "application/json";
+    headers.set("Content-Type", "application/json");
   }
 
   return config;
@@ -72,11 +66,6 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.log("❌ AXIOS ERROR:", {
-      status: error.response?.status,
-      data: error.response?.data,
-    });
-
     const url = error.config?.url ?? "";
     const isAuthRequest = isAuthUrl(url);
 
