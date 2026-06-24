@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { CARD_TEMPLATES } from "../constants/cardTemplates";
-import { Card, CardFormValues } from "../types";
+import { Card, CardFormValues, CardNetworkType } from "../types";
 import {
     SocialNetwork,
     socialNetworkService,
@@ -132,9 +132,9 @@ export default function CardForm({
             qualities:
                 initialData.qualities && initialData.qualities.length > 0
                     ? initialData.qualities.map((quality) => ({
-                          uuid: quality.uuid,
-                          name: quality.name ?? "",
-                      }))
+                        uuid: quality.uuid,
+                        name: quality.name ?? "",
+                    }))
                     : [{ name: "" }],
 
             documents: [],
@@ -142,20 +142,22 @@ export default function CardForm({
             networks:
                 initialData.networks && initialData.networks.length > 0
                     ? initialData.networks.map((network) => ({
-                          uuid: network.uuid ?? "",
-                          value: network.value ?? "",
-                          label: network.label ?? "",
-                          name: network.name ?? "",
-                          icon_url: network.icon_url ?? null,
-                          type: network.type ?? "",
-                      }))
+                        uuid: network.uuid ?? "",
+                        value: network.value ?? "",
+                        label: network.label ?? "",
+                        name: network.name ?? "",
+                        icon_url: network.icon_url ?? null,
+                        type: network.type
+                            ? (network.type as CardNetworkType)
+                            : undefined,
+                    }))
                     : [
-                          {
-                              uuid: "",
-                              value: "",
-                              label: "",
-                          },
-                      ],
+                        {
+                            uuid: "",
+                            value: "",
+                            label: "",
+                        },
+                    ],
         });
     }, [
         initialData?.uuid,
@@ -232,9 +234,9 @@ export default function CardForm({
             qualities: (prev.qualities ?? []).map((quality, qualityIndex) =>
                 qualityIndex === index
                     ? {
-                          ...quality,
-                          name: value,
-                      }
+                        ...quality,
+                        name: value,
+                    }
                     : quality
             ),
         }));
@@ -249,8 +251,8 @@ export default function CardForm({
                 qualities:
                     qualities.length > 1
                         ? qualities.filter(
-                              (_, qualityIndex) => qualityIndex !== index
-                          )
+                            (_, qualityIndex) => qualityIndex !== index
+                        )
                         : qualities,
             };
         });
@@ -304,17 +306,25 @@ export default function CardForm({
 
     const updateNetwork = (
         index: number,
-        key: "uuid" | "value" | "label" | "name" | "icon_url" | "type",
-        value: string
+        key:
+            | "uuid"
+            | "value"
+            | "label"
+            | "name"
+            | "icon_url"
+            | "type"
+            | "red_social"
+            | "red_social_uuid",
+        value: string | CardNetworkType | undefined
     ) => {
         setForm((prev) => ({
             ...prev,
             networks: (prev.networks ?? []).map((network, networkIndex) =>
                 networkIndex === index
                     ? {
-                          ...network,
-                          [key]: value,
-                      }
+                        ...network,
+                        [key]: value,
+                    }
                     : network
             ),
         }));
@@ -329,8 +339,8 @@ export default function CardForm({
                 networks:
                     networks.length > 1
                         ? networks.filter(
-                              (_, networkIndex) => networkIndex !== index
-                          )
+                            (_, networkIndex) => networkIndex !== index
+                        )
                         : networks,
             };
         });
