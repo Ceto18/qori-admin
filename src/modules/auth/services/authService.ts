@@ -1,5 +1,15 @@
 import { api } from "@/services/api";
 
+export type UserRole = "user" | "admin" | "superadmin";
+
+export type AuthUser = {
+  uuid: string;
+  name: string;
+  last_name: string;
+  email: string;
+  role: UserRole;
+};
+
 type LoginPayload = {
   email: string;
   password: string;
@@ -23,7 +33,17 @@ type RegisterPayload = {
   country: string;
 };
 
-export const loginRequest = async (data: LoginPayload) => {
+type AuthResponse = {
+  user: AuthUser | null;
+  token: string | null;
+  refreshToken: string | null;
+  expiresIn: number | null;
+  message: string;
+};
+
+export const loginRequest = async (
+  data: LoginPayload
+): Promise<AuthResponse> => {
   const response = await api.post("/auth/login", data);
 
   const payload = response.data?.data;
@@ -37,7 +57,9 @@ export const loginRequest = async (data: LoginPayload) => {
   };
 };
 
-export const registerRequest = async (data: RegisterPayload) => {
+export const registerRequest = async (
+  data: RegisterPayload
+): Promise<AuthResponse> => {
   const response = await api.post("/auth/register", data);
 
   const payload = response.data?.data;
