@@ -107,7 +107,7 @@ export default function DataTable<T>({
                     className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
                   >
                     Cargando datos...
-                  </td>
+                  </TableCell>
                 </TableRow>
               ) : data.length === 0 ? (
                 <TableRow>
@@ -116,7 +116,7 @@ export default function DataTable<T>({
                     className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
                   >
                     {emptyMessage}
-                  </td>
+                  </TableCell>
                 </TableRow>
               ) : (
                 data.map((row, rowIndex) => (

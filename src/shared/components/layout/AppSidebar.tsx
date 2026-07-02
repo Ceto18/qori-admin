@@ -76,6 +76,7 @@ const navItems: NavItem[] = [
     icon: <DiscountCodeIcon />,
     name: "Gestión de Quejas",
     path: "/complaint-management",
+    roles: ["admin", "superadmin"],
   },
 ];
 
