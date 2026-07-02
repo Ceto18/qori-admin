@@ -5,11 +5,8 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { CARD_TEMPLATES } from "../constants/cardTemplates";
-import { Card, CardFormValues } from "../types";
-import {
-    SocialNetwork,
-    socialNetworkService,
-} from "../services/socialNetworkService";
+import { Card, CardFormValues, SocialNetwork } from "../types";
+import { socialNetworkService } from "../services/socialNetworkService";
 
 import CardPreview from "./CardPreview";
 
@@ -25,6 +22,15 @@ interface Props {
     loading?: boolean;
     onSubmit: (values: CardFormValues) => Promise<void>;
 }
+
+type NetworkEditableKey =
+    | "uuid"
+    | "value"
+    | "label"
+    | "name"
+    | "icon_url"
+    | "red_social"
+    | "red_social_uuid";
 
 const DEFAULT_DESIGN_ID = CARD_TEMPLATES[0]?.id ?? "";
 
@@ -58,6 +64,10 @@ const getInitialForm = (): CardFormValues => ({
             uuid: "",
             value: "",
             label: "",
+            red_social: "",
+            red_social_uuid: "",
+            name: "",
+            icon_url: null,
         },
     ],
 });
@@ -78,7 +88,7 @@ export default function CardForm({
             try {
                 const response = await socialNetworkService.getSocialNetworks();
 
-                setSocialNetworks(response.data?.data ?? []);
+                setSocialNetworks(response?.data?.data ?? []);
             } catch (error) {
                 console.error("Error al cargar redes sociales:", error);
                 setSocialNetworks([]);
@@ -142,22 +152,58 @@ export default function CardForm({
             networks:
                 initialData.networks && initialData.networks.length > 0
                     ? initialData.networks.map((network) => ({
+                          /**
+                           * UUID del registro network de la tarjeta.
+                           */
                           uuid: network.uuid ?? "",
+
                           value: network.value ?? "",
                           label: network.label ?? "",
-                          name: network.name ?? "",
-                          icon_url: network.icon_url ?? null,
-                          type: network.type ?? "",
+
+                          /**
+                           * UUID real de la red social.
+                           * Este es el que se envía como networks[0][red_social].
+                           */
+                          red_social:
+                              network.red_social ??
+                              network.red_social_uuid ??
+                              network.type?.uuid ??
+                              "",
+
+                          red_social_uuid:
+                              network.red_social_uuid ??
+                              network.red_social ??
+                              network.type?.uuid ??
+                              "",
+
+                          /**
+                           * Datos visuales para el formulario.
+                           */
+                          name: network.type?.name ?? network.name ?? "",
+                          icon_url:
+                              network.type?.icon_url ??
+                              network.icon_url ??
+                              null,
+
+                          /**
+                           * Objeto completo que devuelve el backend.
+                           */
+                          type: network.type,
                       }))
                     : [
                           {
                               uuid: "",
                               value: "",
                               label: "",
+                              red_social: "",
+                              red_social_uuid: "",
+                              name: "",
+                              icon_url: null,
                           },
                       ],
         });
     }, [
+        initialData,
         initialData?.uuid,
         initialData?.photo_perfil_url,
         initialData?.photo_banner_url,
@@ -297,6 +343,10 @@ export default function CardForm({
                     uuid: "",
                     value: "",
                     label: "",
+                    red_social: "",
+                    red_social_uuid: "",
+                    name: "",
+                    icon_url: null,
                 },
             ],
         }));
@@ -304,8 +354,8 @@ export default function CardForm({
 
     const updateNetwork = (
         index: number,
-        key: "uuid" | "value" | "label" | "name" | "icon_url" | "type",
-        value: string
+        key: NetworkEditableKey,
+        value: string | null | undefined
     ) => {
         setForm((prev) => ({
             ...prev,
@@ -313,7 +363,7 @@ export default function CardForm({
                 networkIndex === index
                     ? {
                           ...network,
-                          [key]: value,
+                          [key]: value ?? "",
                       }
                     : network
             ),

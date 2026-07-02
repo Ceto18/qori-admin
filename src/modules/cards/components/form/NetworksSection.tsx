@@ -3,9 +3,16 @@ import { Plus, Trash2 } from "lucide-react";
 import Input from "@/shared/components/form/input/InputField";
 import Select from "@/shared/components/form/Select";
 
-import { CardNetwork } from "../../types";
-import { SocialNetwork } from "../../services/socialNetworkService";
+import { CardNetwork, SocialNetwork } from "../../types";
 import FormField from "./FormField";
+
+type NetworkEditableKey =
+    | "value"
+    | "label"
+    | "name"
+    | "icon_url"
+    | "red_social"
+    | "red_social_uuid";
 
 interface Props {
     networks: CardNetwork[];
@@ -13,16 +20,8 @@ interface Props {
     onAdd: () => void;
     onUpdate: (
         index: number,
-        key:
-            | "uuid"
-            | "value"
-            | "label"
-            | "name"
-            | "icon_url"
-            | "type"
-            | "red_social"
-            | "red_social_uuid",
-        value: string | CardNetwork["type"]
+        key: NetworkEditableKey,
+        value: string | null | undefined
     ) => void;
     onRemove: (index: number) => void;
 }
@@ -40,13 +39,10 @@ export default function NetworksSection({
     }));
 
     const findSocialNetworkValue = (network: CardNetwork) => {
-        const typeUuid =
-            typeof network.type === "object" ? network.type?.uuid : "";
-
         const directValue =
-            typeUuid ||
             network.red_social ||
             network.red_social_uuid ||
+            network.type?.uuid ||
             "";
 
         if (
@@ -54,13 +50,6 @@ export default function NetworksSection({
             socialNetworks.some((social) => social.uuid === directValue)
         ) {
             return directValue;
-        }
-
-        if (
-            network.uuid &&
-            socialNetworks.some((social) => social.uuid === network.uuid)
-        ) {
-            return network.uuid;
         }
 
         if (network.name) {
@@ -72,15 +61,7 @@ export default function NetworksSection({
             if (byName) return byName.uuid;
         }
 
-        if (typeof network.type === "string") {
-            const byType = socialNetworks.find(
-                (social) => social.type === network.type
-            );
-
-            if (byType) return byType.uuid;
-        }
-
-        if (typeof network.type === "object" && network.type?.name) {
+        if (network.type?.name) {
             const byTypeName = socialNetworks.find(
                 (social) =>
                     social.name.toLowerCase() ===
@@ -98,30 +79,20 @@ export default function NetworksSection({
             (network) => network.uuid === value
         );
 
-        onUpdate(index, "uuid", value);
         onUpdate(index, "red_social", value);
         onUpdate(index, "red_social_uuid", value);
         onUpdate(index, "name", selectedNetwork?.name ?? "");
-        onUpdate(index, "icon_url", selectedNetwork?.icon_url ?? "");
-
-        onUpdate(
-            index,
-            "type",
-            selectedNetwork
-                ? {
-                      uuid: selectedNetwork.uuid,
-                      name: selectedNetwork.name,
-                      type: selectedNetwork.type,
-                      icon_url: selectedNetwork.icon_url,
-                  }
-                : undefined
-        );
+        onUpdate(index, "icon_url", selectedNetwork?.icon_url ?? null);
     };
 
     const getNetworkType = (network: CardNetwork) => {
-        if (typeof network.type === "string") return network.type;
+        const selectedNetworkUuid = findSocialNetworkValue(network);
 
-        return network.type?.type ?? "";
+        const selectedNetwork = socialNetworks.find(
+            (social) => social.uuid === selectedNetworkUuid
+        );
+
+        return selectedNetwork?.type ?? network.type?.type ?? "";
     };
 
     const getValuePlaceholder = (type?: string) => {
@@ -161,7 +132,7 @@ export default function NetworksSection({
 
                     return (
                         <div
-                            key={index}
+                            key={network.uuid || index}
                             className="rounded-xl border border-gray-200 p-4 dark:border-white/[0.08]"
                         >
                             <div className="mb-4 flex items-center justify-between gap-3">

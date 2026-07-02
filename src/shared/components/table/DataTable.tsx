@@ -56,6 +56,8 @@ export default function DataTable<T>({
 
   const hasActions = canView || canEdit || canDelete;
 
+  const totalColumns = columns.length + (hasActions ? 1 : 0);
+
   const getAlignClass = (align?: "left" | "center" | "right") => {
     switch (align) {
       case "center":
@@ -101,7 +103,7 @@ export default function DataTable<T>({
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={columns.length + (hasActions ? 1 : 0)}
+                    colSpan={totalColumns}
                     className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
                   >
                     Cargando datos...
@@ -110,7 +112,7 @@ export default function DataTable<T>({
               ) : data.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={columns.length + (hasActions ? 1 : 0)}
+                    colSpan={totalColumns}
                     className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
                   >
                     {emptyMessage}

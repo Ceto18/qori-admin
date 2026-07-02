@@ -14,7 +14,7 @@ export interface CardQuality {
   name: string;
 }
 
-export interface CardNetworkType {
+export interface CardNetworkMeta {
   uuid: string;
   name: string;
   type?: SocialNetworkType;
@@ -22,19 +22,44 @@ export interface CardNetworkType {
 }
 
 export interface CardNetwork {
+  /**
+   * UUID del registro network de la tarjeta.
+   * Este NO es el UUID de la red social.
+   */
   uuid: string;
 
   value: string;
   label: string;
 
+  /**
+   * UUID real de la red social.
+   * Este es el valor que se envía como:
+   * networks[0][red_social]
+   */
   red_social?: string;
   red_social_uuid?: string;
 
+  /**
+   * Datos auxiliares para mostrar en el formulario.
+   */
   name?: string;
   icon?: string | null;
   icon_url?: string | null;
 
-  type?: CardNetworkType;
+  /**
+   * Objeto que devuelve el backend cuando se obtiene una tarjeta.
+   * Aquí viene la red social real:
+   * type.uuid
+   * type.name
+   * type.icon_url
+   */
+  type?: CardNetworkMeta;
+}
+
+export interface CardDocument {
+  uuid: string;
+  name: string;
+  document_url: string;
 }
 
 export interface Card {
@@ -61,7 +86,12 @@ export interface Card {
   active?: boolean;
 
   qualities?: CardQuality[];
-  documents?: string[];
+
+  /**
+   * El backend devuelve documentos como objetos.
+   */
+  documents?: CardDocument[];
+
   networks?: CardNetwork[];
 
   created_at?: string;
@@ -72,7 +102,6 @@ export interface CardFormValues {
   first_name: string;
   last_name: string;
 
-  // Solo para previsualización
   full_name: string;
 
   position: string;
@@ -86,16 +115,19 @@ export interface CardFormValues {
   primary_color: string;
   secondary_color: string;
 
-  // Archivos que se envían al backend
   photo_perfil?: File | null;
   photo_banner?: File | null;
 
-  // URLs que devuelve el backend para edición / preview
   photo_perfil_url?: string | null;
   photo_banner_url?: string | null;
 
   qualities: CardQuality[];
+
+  /**
+   * Para create/update aquí solo van archivos nuevos.
+   */
   documents: Array<File | null>;
+
   networks: CardNetwork[];
 }
 

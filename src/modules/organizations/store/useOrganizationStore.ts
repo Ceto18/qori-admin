@@ -1,6 +1,9 @@
+// src/modules/organizations/store/useOrganizationStore.ts
+
 import { create } from "zustand";
+
 import { organizationService } from "../services/organizationService";
-import { Organization } from "../types";
+import { Organization, OrganizationDetail } from "../types";
 
 import { showSuccess } from "@/shared/utils/toast";
 import { handleApiError } from "@/shared/utils/handleApiError";
@@ -13,7 +16,7 @@ type FetchOrganizationsParams = {
 
 interface OrganizationState {
   organizations: Organization[];
-  organization: Organization | null;
+  organization: OrganizationDetail | null;
 
   loading: boolean;
 
@@ -80,10 +83,17 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
         organization: null,
       });
 
+      if (!uuid) {
+        throw new Error("No se encontró el UUID de la organización.");
+      }
+
       const response = await organizationService.getOrganization(uuid);
 
-      const organizationData =
-        response?.data?.organization ?? response?.data ?? null;
+      const organizationData: OrganizationDetail | null =
+        response?.data?.organization ??
+        response?.data?.data ??
+        response?.data ??
+        null;
 
       set({
         organization: organizationData,
@@ -91,6 +101,10 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     } catch (error) {
       console.error("Error fetchOrganization:", error);
       handleApiError(error);
+
+      set({
+        organization: null,
+      });
     } finally {
       set({ loading: false });
     }
@@ -116,7 +130,14 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     try {
       set({ loading: true });
 
-      const response = await organizationService.updateOrganization(uuid, payload);
+      if (!uuid) {
+        throw new Error("No se encontró el UUID de la organización.");
+      }
+
+      const response = await organizationService.updateOrganization(
+        uuid,
+        payload
+      );
 
       showSuccess(response?.message ?? "Organización actualizada correctamente.");
     } catch (error) {
@@ -131,6 +152,10 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   deleteOrganization: async (uuid) => {
     try {
       set({ loading: true });
+
+      if (!uuid) {
+        throw new Error("No se encontró el UUID de la organización.");
+      }
 
       const response = await organizationService.deleteOrganization(uuid);
 

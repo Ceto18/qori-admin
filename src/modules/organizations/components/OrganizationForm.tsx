@@ -5,7 +5,8 @@ import { Loader2, Save } from "lucide-react";
 
 import Input from "@/shared/components/form/input/InputField";
 import FileInput from "@/shared/components/form/input/FileInput";
-import { Organization } from "../types";
+
+import { OrganizationDetail } from "../types";
 
 type OrganizationFormValues = {
     name: string;
@@ -19,11 +20,22 @@ type OrganizationFormValues = {
 };
 
 interface Props {
-    initialData?: Organization | null;
+    initialData?: OrganizationDetail | null;
     loading?: boolean;
     onSubmit: (formData: FormData) => Promise<void>;
     onCancel?: () => void;
 }
+
+const initialFormValues: OrganizationFormValues = {
+    name: "",
+    description: "",
+    address: "",
+    country: "",
+    city: "",
+    phone: "",
+    website: "",
+    logo: null,
+};
 
 export default function OrganizationForm({
     initialData = null,
@@ -33,32 +45,25 @@ export default function OrganizationForm({
 }: Props) {
     const isEditMode = Boolean(initialData);
 
-    const [form, setForm] = useState<OrganizationFormValues>({
-        name: "",
-        description: "",
-        address: "",
-        country: "",
-        city: "",
-        phone: "",
-        website: "",
-        logo: null,
-    });
+    const [form, setForm] =
+        useState<OrganizationFormValues>(initialFormValues);
 
     useEffect(() => {
-        console.log("INITIAL DATA FORM:", initialData);
-
-        if (initialData) {
-            setForm({
-                name: initialData.name ?? "",
-                description: initialData.description ?? "",
-                address: initialData.address ?? "",
-                country: initialData.country ?? "",
-                city: initialData.city ?? "",
-                phone: initialData.phone ?? "",
-                website: initialData.website ?? "",
-                logo: null,
-            });
+        if (!initialData) {
+            setForm(initialFormValues);
+            return;
         }
+
+        setForm({
+            name: initialData.name ?? "",
+            description: initialData.description ?? "",
+            address: initialData.address ?? "",
+            country: initialData.country ?? "",
+            city: initialData.city ?? "",
+            phone: initialData.phone ?? "",
+            website: initialData.website ?? "",
+            logo: null,
+        });
     }, [initialData]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,24 +93,30 @@ export default function OrganizationForm({
         }));
     };
 
+    const appendString = (
+        formData: FormData,
+        key: string,
+        value: string
+    ) => {
+        const cleanValue = value.trim();
+
+        if (!cleanValue) return;
+
+        formData.append(key, cleanValue);
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         const formData = new FormData();
 
-        formData.append("name", form.name);
-        formData.append("description", form.description);
-        formData.append("address", form.address);
-        formData.append("country", form.country);
-        formData.append("city", form.city);
-
-        if (form.phone) {
-            formData.append("phone", form.phone);
-        }
-
-        if (form.website) {
-            formData.append("website", form.website);
-        }
+        appendString(formData, "name", form.name);
+        appendString(formData, "description", form.description);
+        appendString(formData, "address", form.address);
+        appendString(formData, "country", form.country);
+        appendString(formData, "city", form.city);
+        appendString(formData, "phone", form.phone);
+        appendString(formData, "website", form.website);
 
         if (form.logo) {
             formData.append("logo", form.logo);
@@ -119,7 +130,9 @@ export default function OrganizationForm({
             <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-white/[0.05] dark:bg-white/[0.03] sm:p-6">
                 <div className="mb-6">
                     <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                        {isEditMode ? "Editar organización" : "Crear organización"}
+                        {isEditMode
+                            ? "Editar organización"
+                            : "Crear organización"}
                     </h2>
 
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -202,7 +215,7 @@ export default function OrganizationForm({
 
                         <Input
                             name="website"
-                            placeholder="http://demo.com"
+                            placeholder="https://demo.com"
                             value={form.website}
                             onChange={handleChange}
                         />
@@ -210,7 +223,8 @@ export default function OrganizationForm({
 
                     <div className="md:col-span-2">
                         <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                            Descripción <span className="text-error-500">*</span>
+                            Descripción{" "}
+                            <span className="text-error-500">*</span>
                         </label>
 
                         <textarea
@@ -270,7 +284,9 @@ export default function OrganizationForm({
                         ) : (
                             <>
                                 <Save size={17} />
-                                {isEditMode ? "Actualizar organización" : "Guardar organización"}
+                                {isEditMode
+                                    ? "Actualizar organización"
+                                    : "Guardar organización"}
                             </>
                         )}
                     </button>

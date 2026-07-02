@@ -74,9 +74,9 @@ export default function EditOrganizationPage() {
   } = useOrganizationStore();
 
   useEffect(() => {
-    if (uuid) {
-      fetchOrganization(uuid);
-    }
+    if (!uuid) return;
+
+    fetchOrganization(uuid);
 
     return () => {
       clearOrganization();

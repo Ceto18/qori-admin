@@ -60,6 +60,11 @@ const navItems: NavItem[] = [
     name: "Códigos de Descuento",
     path: "/discount-codes",
   },
+  {
+    icon: <DiscountCodeIcon />,
+    name: "Gestión de Quejas",
+    path: "/complaint-management",
+  },
 ];
 
 const AppSidebar: React.FC = () => {
