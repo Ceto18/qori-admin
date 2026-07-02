@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Spin } from "antd";
 
+import RoleGuard from "@/modules/auth/RoleGuard";
 import TableToolbar from "@/shared/components/table/TableToolbar";
 import TablePagination from "@/shared/components/table/TablePagination";
 import ConfirmModal from "@/shared/components/ui/modal/ConfirmModal";
@@ -58,7 +59,7 @@ function CardsPageErrorMessage({ message }: { message: string }) {
   );
 }
 
-export default function CardsPage() {
+function CardsPageContent() {
   const router = useRouter();
 
   const {
@@ -253,5 +254,13 @@ export default function CardsPage() {
         onCancel={handleCancelDelete}
       />
     </div>
+  );
+}
+
+export default function CardsPage() {
+  return (
+    <RoleGuard roles={["admin", "superadmin"]}>
+      <CardsPageContent />
+    </RoleGuard>
   );
 }

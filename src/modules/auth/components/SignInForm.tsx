@@ -1,10 +1,9 @@
 "use client";
 
-import Checkbox from "@/shared/components/form/input/Checkbox";
 import Input from "@/shared/components/form/input/InputField";
 import Label from "@/shared/components/form/Label";
 import Button from "@/shared/components/ui/button/Button";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/shared/icons";
+import { EyeCloseIcon, EyeIcon } from "@/shared/icons";
 import Link from "next/link";
 import React, { useState } from "react";
 
@@ -17,10 +16,9 @@ import { handleApiError } from "@/shared/utils/handleApiError";
 export default function SignInForm() {
     const router = useRouter();
 
-    const setAuth = useAuthStore((s) => s.setAuth);
+    const setAuth = useAuthStore((state) => state.setAuth);
 
     const [showPassword, setShowPassword] = useState(false);
-    const [isChecked, setIsChecked] = useState(false);
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -30,6 +28,20 @@ export default function SignInForm() {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (loading) return;
+
+        if (!email.trim() || !password.trim()) {
+            handleApiError({
+                response: {
+                    data: {
+                        message: "Ingresa tu correo y contraseña.",
+                    },
+                },
+            });
+
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -38,10 +50,8 @@ export default function SignInForm() {
                 password,
             });
 
-            console.log("RESPUESTA BACKEND:", response);
-
-            const user = response.user;
-            const token = response.token;
+            const user = response?.user;
+            const token = response?.token;
 
             if (!token || !user) {
                 throw new Error("Respuesta inválida del backend");
@@ -52,13 +62,10 @@ export default function SignInForm() {
                 token,
             });
 
-            //showSuccess(response.message ?? "Inicio de sesión correcto.");
             showSuccess("Inicio de sesión correcto.");
 
             router.replace("/");
-        } catch (error: any) {
-            console.error("Error login:", error?.response?.data || error);
-
+        } catch (error) {
             handleApiError(error);
         } finally {
             setLoading(false);
@@ -66,14 +73,14 @@ export default function SignInForm() {
     };
 
     return (
-        <div className="flex flex-col flex-1 w-full lg:w-1/2">
-
-            <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
+        <div className="flex w-full flex-1 flex-col lg:w-1/2">
+            <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
                 <div>
                     <div className="mb-5 sm:mb-8">
                         <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
                             Iniciar sesión
                         </h1>
+
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                             Ingresa tu correo y contraseña para continuar
                         </p>
@@ -81,51 +88,54 @@ export default function SignInForm() {
 
                     <form onSubmit={handleLogin}>
                         <div className="space-y-6">
-
-                            {/* EMAIL */}
                             <div>
                                 <Label>
-                                    Correo electrónico <span className="text-error-500">*</span>
+                                    Correo electrónico{" "}
+                                    <span className="text-error-500">*</span>
                                 </Label>
+
                                 <Input
                                     placeholder="ejemplo@correo.com"
                                     type="email"
+                                    value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                 />
                             </div>
 
-                            {/* PASSWORD */}
                             <div>
                                 <Label>
-                                    Contraseña <span className="text-error-500">*</span>
+                                    Contraseña{" "}
+                                    <span className="text-error-500">*</span>
                                 </Label>
+
                                 <div className="relative">
                                     <Input
                                         type={showPassword ? "text" : "password"}
                                         placeholder="Ingresa tu contraseña"
-                                        onChange={(e) => setPassword(e.target.value)}
+                                        value={password}
+                                        onChange={(e) =>
+                                            setPassword(e.target.value)
+                                        }
                                     />
-                                    <span
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setShowPassword((prev) => !prev)
+                                        }
+                                        className="absolute right-4 top-1/2 z-30 -translate-y-1/2 cursor-pointer"
                                     >
                                         {showPassword ? (
                                             <EyeIcon className="fill-gray-500 dark:fill-gray-400" />
                                         ) : (
                                             <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400" />
                                         )}
-                                    </span>
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* OPTIONS */}
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    {/* <Checkbox checked={isChecked} onChange={setIsChecked} /> */}
-                                    {/* <span className="block text-gray-700 text-theme-sm dark:text-gray-400">
-                                        Mantener sesión iniciada
-                                    </span> */}
-                                </div>
+                                <div />
 
                                 <Link
                                     href="/reset-password"
@@ -137,7 +147,7 @@ export default function SignInForm() {
 
                             <div>
                                 <Button
-                                    className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600"
+                                    className="flex w-full items-center justify-center rounded-lg bg-brand-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-70"
                                     size="sm"
                                     type="submit"
                                     disabled={loading}
@@ -148,9 +158,8 @@ export default function SignInForm() {
                         </div>
                     </form>
 
-                    {/* FOOTER */}
                     <div className="mt-5">
-                        <p className="text-sm text-center text-gray-700 dark:text-gray-400 sm:text-start">
+                        <p className="text-center text-sm text-gray-700 dark:text-gray-400 sm:text-start">
                             ¿No tienes una cuenta?{" "}
                             <Link
                                 href="/signup"

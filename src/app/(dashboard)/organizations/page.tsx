@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Spin } from "antd";
 
+import RoleGuard from "@/modules/auth/RoleGuard";
+
 import TableToolbar from "@/shared/components/table/TableToolbar";
 import TablePagination from "@/shared/components/table/TablePagination";
 import ConfirmModal from "@/shared/components/ui/modal/ConfirmModal";
@@ -28,7 +30,7 @@ function TableAntLoading() {
   );
 }
 
-export default function OrganizationsPage() {
+function OrganizationsPageContent() {
   const router = useRouter();
 
   const {
@@ -164,5 +166,13 @@ export default function OrganizationsPage() {
         onCancel={handleCancelDelete}
       />
     </div>
+  );
+}
+
+export default function OrganizationsPage() {
+  return (
+    <RoleGuard roles={["admin", "superadmin"]}>
+      <OrganizationsPageContent />
+    </RoleGuard>
   );
 }

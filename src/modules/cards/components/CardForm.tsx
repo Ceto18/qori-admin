@@ -142,9 +142,9 @@ export default function CardForm({
             qualities:
                 initialData.qualities && initialData.qualities.length > 0
                     ? initialData.qualities.map((quality) => ({
-                          uuid: quality.uuid,
-                          name: quality.name ?? "",
-                      }))
+                        uuid: quality.uuid,
+                        name: quality.name ?? "",
+                    }))
                     : [{ name: "" }],
 
             documents: [],
@@ -278,9 +278,9 @@ export default function CardForm({
             qualities: (prev.qualities ?? []).map((quality, qualityIndex) =>
                 qualityIndex === index
                     ? {
-                          ...quality,
-                          name: value,
-                      }
+                        ...quality,
+                        name: value,
+                    }
                     : quality
             ),
         }));
@@ -295,8 +295,8 @@ export default function CardForm({
                 qualities:
                     qualities.length > 1
                         ? qualities.filter(
-                              (_, qualityIndex) => qualityIndex !== index
-                          )
+                            (_, qualityIndex) => qualityIndex !== index
+                        )
                         : qualities,
             };
         });
@@ -379,8 +379,8 @@ export default function CardForm({
                 networks:
                     networks.length > 1
                         ? networks.filter(
-                              (_, networkIndex) => networkIndex !== index
-                          )
+                            (_, networkIndex) => networkIndex !== index
+                        )
                         : networks,
             };
         });

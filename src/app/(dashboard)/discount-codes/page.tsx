@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Spin } from "antd";
 
+import RoleGuard from "@/modules/auth/RoleGuard";
+
 import TableToolbar from "@/shared/components/table/TableToolbar";
 import TablePagination from "@/shared/components/table/TablePagination";
 import ConfirmModal from "@/shared/components/ui/modal/ConfirmModal";
@@ -26,7 +28,7 @@ function TableAntLoading() {
   );
 }
 
-export default function DiscountCodesPage() {
+function DiscountCodesPageContent() {
   const router = useRouter();
 
   const {
@@ -162,5 +164,13 @@ export default function DiscountCodesPage() {
         onCancel={handleCancelDelete}
       />
     </div>
+  );
+}
+
+export default function DiscountCodesPage() {
+  return (
+    <RoleGuard roles={["admin", "superadmin"]}>
+      <DiscountCodesPageContent />
+    </RoleGuard>
   );
 }
