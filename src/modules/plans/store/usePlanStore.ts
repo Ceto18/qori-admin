@@ -1,6 +1,7 @@
 import { create } from "zustand";
+
 import { planService } from "../services/planService";
-import { Plan, PlanPayload } from "../types";
+import { Plan, PlanDetail, PlanPayload } from "../types";
 
 import { showSuccess } from "@/shared/utils/toast";
 import { handleApiError } from "@/shared/utils/handleApiError";
@@ -13,7 +14,7 @@ type FetchPlansParams = {
 
 interface PlanState {
   plans: Plan[];
-  plan: Plan | null;
+  plan: PlanDetail | null;
 
   loading: boolean;
 

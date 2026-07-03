@@ -61,10 +61,26 @@ interface CardState {
     payload: CardFormValues
   ) => Promise<void>;
 
+  toggleCardState: (
+    organizationUuid: string,
+    cardUuid: string,
+    state: boolean
+  ) => Promise<void>;
+
   deleteCard: (
     organizationUuid: string,
     uuid: string
   ) => Promise<void>;
+
+  getCardUrl: (
+    organizationUuid: string,
+    cardUuid: string
+  ) => Promise<string | null>;
+
+  getCardQr: (
+    organizationUuid: string,
+    cardUuid: string
+  ) => Promise<string | null>;
 
   clearSelectedCard: () => void;
 }
@@ -181,6 +197,13 @@ export const useCardStore = create<CardState>((set, get) => ({
     } catch (error) {
       console.error("Error fetchCards:", error);
       handleApiError(error);
+
+      set({
+        cards: [],
+        currentPage: 1,
+        totalPages: 1,
+        total: 0,
+      });
     } finally {
       set({ loading: false });
     }
@@ -277,6 +300,54 @@ export const useCardStore = create<CardState>((set, get) => ({
     }
   },
 
+  toggleCardState: async (
+    organizationUuid: string,
+    cardUuid: string,
+    state: boolean
+  ) => {
+    try {
+      set({ saving: true });
+
+      if (!organizationUuid || typeof organizationUuid !== "string") {
+        throw new Error("No se encontró el UUID de la organización.");
+      }
+
+      if (!cardUuid) {
+        throw new Error("No se encontró el UUID de la tarjeta.");
+      }
+
+      const response = await cardService.toggleCardState(
+        organizationUuid,
+        cardUuid,
+        state
+      );
+
+      set((currentState) => ({
+        cards: currentState.cards.map((card) =>
+          card.uuid === cardUuid
+            ? {
+                ...card,
+                active: state,
+              }
+            : card
+        ),
+      }));
+
+      showSuccess(
+        response?.message ??
+          (state
+            ? "Tarjeta activada correctamente."
+            : "Tarjeta desactivada correctamente.")
+      );
+    } catch (error) {
+      console.error("Error toggleCardState:", error);
+      handleApiError(error);
+      throw error;
+    } finally {
+      set({ saving: false });
+    }
+  },
+
   deleteCard: async (organizationUuid: string, uuid: string) => {
     try {
       set({ deleting: true });
@@ -295,6 +366,7 @@ export const useCardStore = create<CardState>((set, get) => ({
 
       set((state) => ({
         cards: state.cards.filter((card) => card.uuid !== uuid),
+        total: Math.max(state.total - 1, 0),
       }));
     } catch (error) {
       console.error("Error deleteCard:", error);
@@ -302,6 +374,52 @@ export const useCardStore = create<CardState>((set, get) => ({
       throw error;
     } finally {
       set({ deleting: false });
+    }
+  },
+
+  getCardUrl: async (organizationUuid: string, cardUuid: string) => {
+    try {
+      if (!organizationUuid || typeof organizationUuid !== "string") {
+        throw new Error("No se encontró el UUID de la organización.");
+      }
+
+      if (!cardUuid) {
+        throw new Error("No se encontró el UUID de la tarjeta.");
+      }
+
+      const response = await cardService.getCardUrl(
+        organizationUuid,
+        cardUuid
+      );
+
+      return response?.data ?? null;
+    } catch (error) {
+      console.error("Error getCardUrl:", error);
+      handleApiError(error);
+      return null;
+    }
+  },
+
+  getCardQr: async (organizationUuid: string, cardUuid: string) => {
+    try {
+      if (!organizationUuid || typeof organizationUuid !== "string") {
+        throw new Error("No se encontró el UUID de la organización.");
+      }
+
+      if (!cardUuid) {
+        throw new Error("No se encontró el UUID de la tarjeta.");
+      }
+
+      const response = await cardService.getCardQr(
+        organizationUuid,
+        cardUuid
+      );
+
+      return response?.data ?? null;
+    } catch (error) {
+      console.error("Error getCardQr:", error);
+      handleApiError(error);
+      return null;
     }
   },
 

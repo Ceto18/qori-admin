@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Spin } from "antd";
+import { Alert, Modal, QRCode, Spin, message } from "antd";
 
 import RoleGuard from "@/modules/auth/RoleGuard";
 import TableToolbar from "@/shared/components/table/TableToolbar";
@@ -21,6 +21,16 @@ import { handleApiError } from "@/shared/utils/handleApiError";
 type Organization = {
   uuid: string;
   name?: string;
+  slug?: string;
+};
+
+type ShareableCard = Card & {
+  slug?: string;
+  card_slug?: string;
+  public_url?: string;
+  publicUrl?: string;
+  organization_slug?: string;
+  organizationSlug?: string;
 };
 
 function TableAntLoading() {
@@ -74,8 +84,13 @@ function CardsPageContent() {
 
   const [search, setSearch] = useState("");
   const [organizationUuid, setOrganizationUuid] = useState("");
+  const [organizationSlug, setOrganizationSlug] = useState("");
   const [organizationLoaded, setOrganizationLoaded] = useState(false);
   const [cardToDelete, setCardToDelete] = useState<Card | null>(null);
+
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [selectedQrCard, setSelectedQrCard] = useState<Card | null>(null);
+  const [selectedQrUrl, setSelectedQrUrl] = useState("");
 
   useEffect(() => {
     const loadOrganization = async () => {
@@ -96,6 +111,7 @@ function CardsPageContent() {
         if (!organization?.uuid) return;
 
         setOrganizationUuid(organization.uuid);
+        setOrganizationSlug(organization.slug ?? "");
 
         await fetchCards(organization.uuid, {
           page: 1,
@@ -112,6 +128,74 @@ function CardsPageContent() {
 
     loadOrganization();
   }, [fetchCards, perPage]);
+
+  const getPublicCardUrl = (card: Card) => {
+    const shareableCard = card as ShareableCard;
+
+    if (shareableCard.public_url) {
+      return shareableCard.public_url;
+    }
+
+    if (shareableCard.publicUrl) {
+      return shareableCard.publicUrl;
+    }
+
+    const currentOrigin =
+      typeof window !== "undefined" ? window.location.origin : "";
+
+    const cardSlug =
+      shareableCard.card_slug ??
+      shareableCard.slug ??
+      shareableCard.uuid;
+
+    const currentOrganizationSlug =
+      shareableCard.organization_slug ??
+      shareableCard.organizationSlug ??
+      organizationSlug;
+
+    if (currentOrganizationSlug && cardSlug) {
+      return `${currentOrigin}/info/${currentOrganizationSlug}/${cardSlug}`;
+    }
+
+    return `${currentOrigin}/cards/${card.uuid}`;
+  };
+
+  const handleOpenUrl = (card: Card) => {
+    const publicUrl = getPublicCardUrl(card);
+
+    window.open(publicUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleOpenQr = (card: Card) => {
+    const publicUrl = getPublicCardUrl(card);
+
+    setSelectedQrCard(card);
+    setSelectedQrUrl(publicUrl);
+    setQrModalOpen(true);
+  };
+
+  const handleCloseQrModal = () => {
+    setQrModalOpen(false);
+    setSelectedQrCard(null);
+    setSelectedQrUrl("");
+  };
+
+  const handleOpenPublicUrl = () => {
+    if (!selectedQrUrl) return;
+
+    window.open(selectedQrUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleCopyQrUrl = async () => {
+    if (!selectedQrUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(selectedQrUrl);
+      message.success("URL copiada correctamente.");
+    } catch {
+      message.error("No se pudo copiar la URL.");
+    }
+  };
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -200,6 +284,11 @@ function CardsPageContent() {
     setCardToDelete(null);
   };
 
+  const selectedQrCardName =
+    selectedQrCard?.full_name ??
+    `${selectedQrCard?.first_name ?? ""} ${selectedQrCard?.last_name ?? ""
+      }`.trim();
+
   if (organizationLoaded && !organizationUuid) {
     return (
       <CardsPageErrorMessage message="No se encontró una organización disponible para listar las tarjetas." />
@@ -229,6 +318,8 @@ function CardsPageContent() {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onToggleState={handleToggleState}
+          onOpenUrl={handleOpenUrl}
+          onOpenQr={handleOpenQr}
         />
       </div>
 
@@ -244,15 +335,54 @@ function CardsPageContent() {
       <ConfirmModal
         open={Boolean(cardToDelete)}
         title="Eliminar tarjeta"
-        message={`¿Seguro que deseas eliminar la tarjeta "${
-          cardToDelete?.full_name ?? ""
-        }"? Esta acción no se puede deshacer.`}
+        message={`¿Seguro que deseas eliminar la tarjeta "${cardToDelete?.full_name ?? ""
+          }"? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         cancelText="Cancelar"
         loading={loading}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />
+
+      <Modal
+        open={qrModalOpen}
+        title="Código QR de la tarjeta"
+        centered
+        onCancel={handleCloseQrModal}
+        footer={null}
+      >
+        <div className="flex flex-col items-center text-center">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <QRCode value={selectedQrUrl || " "} size={220} />
+          </div>
+
+          <h3 className="mt-4 text-base font-semibold text-gray-800 dark:text-white">
+            {selectedQrCardName || "Tarjeta digital"}
+          </h3>
+
+          <p className="mt-2 max-w-full break-all rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500 dark:bg-white/[0.05] dark:text-gray-400">
+            {selectedQrUrl}
+          </p>
+
+          <div className="mt-5 flex w-full flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={handleCopyQrUrl}
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-300 dark:hover:bg-white/[0.05]"
+            >
+              Copiar URL
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenPublicUrl}
+              className="w-full rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-600"
+            >
+              Abrir tarjeta
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

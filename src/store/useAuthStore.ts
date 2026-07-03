@@ -1,6 +1,7 @@
 // src/store/useAuthStore.ts
+
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export type UserRole = "user" | "admin" | "superadmin";
 
@@ -15,9 +16,20 @@ export type AuthUser = {
 interface AuthState {
   user: AuthUser | null;
   token: string | null;
+  refreshToken: string | null;
+  expiresIn: number | null;
 
-  setAuth: (data: { user: AuthUser; token: string }) => void;
+  hasHydrated: boolean;
+
+  setAuth: (data: {
+    user: AuthUser;
+    token: string;
+    refreshToken?: string | null;
+    expiresIn?: number | null;
+  }) => void;
+
   logout: () => void;
+  setHasHydrated: (value: boolean) => void;
 
   hasRole: (roles: UserRole[]) => boolean;
   isUser: () => boolean;
@@ -31,11 +43,22 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       token: null,
+      refreshToken: null,
+      expiresIn: null,
 
-      setAuth: ({ user, token }) => {
+      hasHydrated: false,
+
+      setAuth: ({
+        user,
+        token,
+        refreshToken = null,
+        expiresIn = null,
+      }) => {
         set({
           user,
           token,
+          refreshToken,
+          expiresIn,
         });
       },
 
@@ -43,12 +66,19 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: null,
           token: null,
+          refreshToken: null,
+          expiresIn: null,
         });
 
         if (typeof window !== "undefined") {
           localStorage.removeItem("auth-storage");
-          window.location.href = "/signin";
         }
+      },
+
+      setHasHydrated: (value) => {
+        set({
+          hasHydrated: value,
+        });
       },
 
       hasRole: (roles) => {
@@ -79,6 +109,19 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
+
+      storage: createJSONStorage(() => localStorage),
+
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        refreshToken: state.refreshToken,
+        expiresIn: state.expiresIn,
+      }),
+
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

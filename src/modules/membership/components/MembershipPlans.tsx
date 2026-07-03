@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePlanStore } from "@/modules/plans/store/usePlanStore";
-import { Plan } from "@/modules/plans/types";
+import { usePublicPlanStore } from "@/modules/public-plans/store/usePublicPlanStore";
+import type { PublicPlan } from "@/modules/public-plans/types";
 import MembershipPaymentModal from "./MembershipPaymentModal";
 
 function CrownIcon() {
@@ -40,18 +40,13 @@ function formatPrice(price: string | number) {
 }
 
 export default function MembershipPlans() {
-    const { plans, loading, fetchPlans } = usePlanStore();
-    const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+    const { plans, loading, fetchActivePlans } = usePublicPlanStore();
+
+    const [selectedPlan, setSelectedPlan] = useState<PublicPlan | null>(null);
 
     useEffect(() => {
-        fetchPlans({
-            page: 1,
-            perPage: 50,
-            search: "",
-        });
-    }, [fetchPlans]);
-
-    const activePlans = plans.filter((plan) => plan.active);
+        fetchActivePlans();
+    }, [fetchActivePlans]);
 
     return (
         <>
@@ -98,7 +93,7 @@ export default function MembershipPlans() {
                     </div>
                 )}
 
-                {!loading && activePlans.length === 0 && (
+                {!loading && plans.length === 0 && (
                     <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center dark:border-gray-800 dark:bg-white/[0.03]">
                         <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
                             No hay membresías disponibles
@@ -110,11 +105,11 @@ export default function MembershipPlans() {
                     </div>
                 )}
 
-                {!loading && activePlans.length > 0 && (
+                {!loading && plans.length > 0 && (
                     <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                        {activePlans.map((plan) => (
+                        {plans.map((plan) => (
                             <div
-                                key={plan.uuid}
+                                key={plan.slug}
                                 className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:shadow-lg dark:border-gray-800 dark:bg-white/[0.03]"
                             >
                                 <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-brand-500/10 blur-2xl" />
@@ -134,16 +129,8 @@ export default function MembershipPlans() {
                                         {plan.name}
                                     </h2>
 
-                                    <p className="mt-3 min-h-[48px] text-sm leading-6 text-gray-500 dark:text-gray-400">
-                                        Accede hasta{" "}
-                                        <span className="font-medium text-gray-700 dark:text-gray-300">
-                                            {plan.max_organizations}
-                                        </span>{" "}
-                                        organizaciones y{" "}
-                                        <span className="font-medium text-gray-700 dark:text-gray-300">
-                                            {plan.max_cards}
-                                        </span>{" "}
-                                        tarjetas digitales dentro de Qori ID.
+                                    <p className="mt-3 min-h-[72px] text-sm leading-6 text-gray-500 dark:text-gray-400">
+                                        {plan.description}
                                     </p>
 
                                     <div className="mt-6">
@@ -162,7 +149,7 @@ export default function MembershipPlans() {
                                                 Organizaciones
                                             </p>
                                             <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">
-                                                {plan.max_organizations}
+                                                {plan.limits.max_organizations}
                                             </p>
                                         </div>
 
@@ -171,10 +158,34 @@ export default function MembershipPlans() {
                                                 Tarjetas
                                             </p>
                                             <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">
-                                                {plan.max_cards}
+                                                {plan.limits.max_cards}
                                             </p>
                                         </div>
                                     </div>
+
+                                    {plan.features.length > 0 && (
+                                        <ul className="mt-5 space-y-2">
+                                            {plan.features
+                                                .sort(
+                                                    (a, b) =>
+                                                        a.sort_order -
+                                                        b.sort_order
+                                                )
+                                                .map((feature) => (
+                                                    <li
+                                                        key={`${plan.slug}-${feature.sort_order}`}
+                                                        className="flex gap-2 text-sm text-gray-600 dark:text-gray-400"
+                                                    >
+                                                        <span className="mt-1 h-1.5 w-1.5 rounded-full bg-brand-500" />
+                                                        <span>
+                                                            {
+                                                                feature.description
+                                                            }
+                                                        </span>
+                                                    </li>
+                                                ))}
+                                        </ul>
+                                    )}
 
                                     <button
                                         type="button"

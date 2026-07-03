@@ -1,13 +1,17 @@
-import { DashboardCard } from "../types";
+// src/modules/dashboard/components/AvailableCardsSection.tsx
+
+import type { Card } from "@/modules/cards/types";
 import AvailableCardItem from "./AvailableCardItem";
 
 type Props = {
-  cards: DashboardCard[];
+  cards: Card[];
+  organizationUuid: string;
   hasActiveMembership: boolean;
 };
 
 export default function AvailableCardsSection({
   cards,
+  organizationUuid,
   hasActiveMembership,
 }: Props) {
   return (
@@ -15,28 +19,37 @@ export default function AvailableCardsSection({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
-            Cards disponibles
+            Tarjetas de presentación
           </h2>
 
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Estos son los tipos de tarjeta que podrás usar con tu membresía.
+            Estas son las tarjetas creadas en tu organización.
           </p>
         </div>
 
         <span className="text-sm text-gray-500 dark:text-gray-400">
-          {cards.length} diseños disponibles
+          {cards.length} tarjetas creadas
         </span>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {cards.map((card) => (
-          <AvailableCardItem
-            key={card.id}
-            card={card}
-            hasActiveMembership={hasActiveMembership}
-          />
-        ))}
-      </div>
+      {cards.length === 0 ? (
+        <div className="mt-6 rounded-xl border border-dashed border-gray-300 p-8 text-center dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Aún no tienes tarjetas creadas.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {cards.map((card) => (
+            <AvailableCardItem
+              key={card.uuid}
+              card={card}
+              organizationUuid={organizationUuid}
+              hasActiveMembership={hasActiveMembership}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,3 +1,5 @@
+// src/services/authService.ts
+
 import { api } from "@/services/api";
 
 export type UserRole = "user" | "admin" | "superadmin";
@@ -10,12 +12,12 @@ export type AuthUser = {
   role: UserRole;
 };
 
-type LoginPayload = {
+export type LoginPayload = {
   email: string;
   password: string;
 };
 
-type RegisterPayload = {
+export type RegisterPayload = {
   email: string;
   password: string;
   password_confirmation: string;
@@ -33,7 +35,7 @@ type RegisterPayload = {
   country: string;
 };
 
-type AuthResponse = {
+export type AuthResponse = {
   user: AuthUser | null;
   token: string | null;
   refreshToken: string | null;

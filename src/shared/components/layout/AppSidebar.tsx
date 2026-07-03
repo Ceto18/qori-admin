@@ -46,37 +46,37 @@ const navItems: NavItem[] = [
     icon: <MembershipPlansIcon />,
     name: "Membresia",
     path: "/membership",
-    roles: ["user", "admin", "superadmin"],
+    roles: ["user", "admin"],
   },
   {
     icon: <Building2Icon />,
     name: "Organizaciones",
     path: "/organizations",
-    roles: ["admin", "superadmin"],
+    roles: ["admin"],
   },
   {
     icon: <WalletIcon />,
     name: "Tarjetas de presentación",
     path: "/cards",
-    roles: ["admin", "superadmin"],
+    roles: ["admin"],
   },
   {
     icon: <CreditCardIcon />,
     name: "Planes",
     path: "/plans",
-    roles: ["admin", "superadmin"],
+    roles: ["superadmin"],
   },
   {
     icon: <DiscountCodeIcon />,
     name: "Códigos de Descuento",
     path: "/discount-codes",
-    roles: ["admin", "superadmin"],
+    roles: ["superadmin"],
   },
   {
     icon: <DiscountCodeIcon />,
     name: "Gestión de Quejas",
     path: "/complaint-management",
-    roles: ["admin", "superadmin"],
+    roles: ["superadmin"],
   },
 ];
 

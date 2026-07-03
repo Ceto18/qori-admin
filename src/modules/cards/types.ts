@@ -65,6 +65,13 @@ export interface CardDocument {
 export interface Card {
   uuid: string;
 
+  /**
+   * Slug público de la tarjeta.
+   * Viene en el listado:
+   * /organization/{organizationUuid}/cards
+   */
+  slug?: string | null;
+
   first_name?: string | null;
   last_name?: string | null;
   full_name?: string | null;
@@ -96,6 +103,46 @@ export interface Card {
 
   created_at?: string;
   updated_at?: string;
+}
+
+export interface CardPagination {
+  current_page: number;
+  data: Card[];
+  from: number | null;
+  last_page: number;
+  per_page: number;
+  to: number | null;
+  total: number;
+
+  first_page_url?: string | null;
+  last_page_url?: string | null;
+  next_page_url?: string | null;
+  prev_page_url?: string | null;
+  path?: string;
+}
+
+export interface CardsResponse {
+  success: boolean;
+  message: string;
+  data: CardPagination;
+}
+
+export interface CardResponse {
+  success: boolean;
+  message: string;
+  data: Card;
+}
+
+export interface CardUrlResponse {
+  success: boolean;
+  message: string;
+  data: string;
+}
+
+export interface CardQrResponse {
+  success: boolean;
+  message: string;
+  data: string;
 }
 
 export interface CardFormValues {

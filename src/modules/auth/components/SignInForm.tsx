@@ -60,6 +60,8 @@ export default function SignInForm() {
             setAuth({
                 user,
                 token,
+                refreshToken: response.refreshToken,
+                expiresIn: response.expiresIn,
             });
 
             showSuccess("Inicio de sesión correcto.");

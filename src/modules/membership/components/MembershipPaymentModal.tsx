@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plan } from "@/modules/plans/types";
+
+import type { PublicPlan } from "@/modules/public-plans/types";
 import { DiscountCode } from "@/modules/discountCodes/types";
 import { useDiscountCodeStore } from "@/modules/discountCodes/store/useDiscountCodeStore";
 
 type Props = {
     open: boolean;
-    plan: Plan | null;
+    plan: PublicPlan | null;
     onClose: () => void;
 };
 
@@ -161,7 +162,7 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
         if (!plan) return;
 
         console.log("Abrir Culqi con:", {
-            plan_uuid: plan.uuid,
+            plan_slug: plan.slug,
             plan_name: plan.name,
             discount_code: appliedDiscount?.code ?? null,
             subtotal: planPrice,
@@ -172,7 +173,7 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
         // Aquí luego conectaremos Culqi:
         // 1. Abrir Culqi Checkout
         // 2. Recibir token de Culqi
-        // 3. Enviar token + plan_uuid + discount_code al backend
+        // 3. Enviar token + plan_slug + discount_code al backend
         // 4. Backend confirma pago y activa membresía
     };
 
@@ -233,8 +234,9 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                     Organizaciones
                                 </p>
+
                                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">
-                                    {plan.max_organizations}
+                                    {plan.limits.max_organizations}
                                 </p>
                             </div>
 
@@ -242,8 +244,9 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                     Tarjetas
                                 </p>
+
                                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">
-                                    {plan.max_cards}
+                                    {plan.limits.max_cards}
                                 </p>
                             </div>
                         </div>
@@ -307,6 +310,7 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                             <span className="text-gray-500 dark:text-gray-400">
                                 Subtotal anual
                             </span>
+
                             <span className="font-medium text-gray-800 dark:text-white/90">
                                 {formatPrice(planPrice)}
                             </span>
@@ -316,6 +320,7 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                             <span className="text-gray-500 dark:text-gray-400">
                                 Descuento
                             </span>
+
                             <span className="font-medium text-green-600 dark:text-green-400">
                                 - {formatPrice(discountAmount)}
                             </span>
@@ -327,6 +332,7 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                             <span className="text-base font-semibold text-gray-800 dark:text-white/90">
                                 Total a pagar
                             </span>
+
                             <span className="text-2xl font-bold text-gray-800 dark:text-white/90">
                                 {formatPrice(total)}
                             </span>

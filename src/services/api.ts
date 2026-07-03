@@ -1,3 +1,5 @@
+// src/services/api.ts
+
 import axios, { AxiosHeaders } from "axios";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -17,6 +19,23 @@ const isAuthUrl = (url: string) => {
   );
 };
 
+const getPersistedToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+
+  const persisted = localStorage.getItem("auth-storage");
+
+  if (!persisted) return null;
+
+  try {
+    const parsed = JSON.parse(persisted);
+
+    return parsed?.state?.token ?? null;
+  } catch {
+    localStorage.removeItem("auth-storage");
+    return null;
+  }
+};
+
 api.interceptors.request.use((config) => {
   const url = config.url ?? "";
   const isAuthRequest = isAuthUrl(url);
@@ -32,21 +51,10 @@ api.interceptors.request.use((config) => {
     return config;
   }
 
-  let token = useAuthStore.getState().token;
+  const storeToken = useAuthStore.getState().token;
+  const persistedToken = getPersistedToken();
 
-  if (!token && typeof window !== "undefined") {
-    const persisted = localStorage.getItem("auth-storage");
-
-    if (persisted) {
-      try {
-        const parsed = JSON.parse(persisted);
-        token = parsed?.state?.token ?? null;
-      } catch {
-        localStorage.removeItem("auth-storage");
-        token = null;
-      }
-    }
-  }
+  const token = storeToken || persistedToken;
 
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
@@ -70,7 +78,15 @@ api.interceptors.response.use(
     const isAuthRequest = isAuthUrl(url);
 
     if (error.response?.status === 401 && !isAuthRequest) {
-      useAuthStore.getState().logout();
+      const token = useAuthStore.getState().token || getPersistedToken();
+
+      /**
+       * Solo cerramos sesión si realmente había token.
+       * Esto evita borrar la sesión por una petición que salió antes de hidratar.
+       */
+      if (token) {
+        useAuthStore.getState().logout();
+      }
     }
 
     return Promise.reject(error);
