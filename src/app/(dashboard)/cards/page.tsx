@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Modal, QRCode, Spin, message } from "antd";
+import { Alert, Modal, Spin, message } from "antd";
 
 import RoleGuard from "@/modules/auth/RoleGuard";
 import TableToolbar from "@/shared/components/table/TableToolbar";
@@ -22,15 +22,6 @@ type Organization = {
   uuid: string;
   name?: string;
   slug?: string;
-};
-
-type ShareableCard = Card & {
-  slug?: string;
-  card_slug?: string;
-  public_url?: string;
-  publicUrl?: string;
-  organization_slug?: string;
-  organizationSlug?: string;
 };
 
 function TableAntLoading() {
@@ -129,72 +120,87 @@ function CardsPageContent() {
     loadOrganization();
   }, [fetchCards, perPage]);
 
-  const getPublicCardUrl = (card: Card) => {
-    const shareableCard = card as ShareableCard;
-
-    if (shareableCard.public_url) {
-      return shareableCard.public_url;
+  const handleOpenUrl = async (card: Card) => {
+    if (!organizationUuid) {
+      message.error("No se encontró la organización.");
+      return;
     }
 
-    if (shareableCard.publicUrl) {
-      return shareableCard.publicUrl;
+    try {
+      const response = await cardService.getCardUrl(
+        organizationUuid,
+        card.uuid
+      );
+
+      const publicUrl = response.data;
+
+      if (!publicUrl) {
+        message.error("No se encontró la URL de la tarjeta.");
+        return;
+      }
+
+      window.open(publicUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      console.error("Error al obtener URL de tarjeta:", error);
+      handleApiError(error);
     }
-
-    const currentOrigin =
-      typeof window !== "undefined" ? window.location.origin : "";
-
-    const cardSlug =
-      shareableCard.card_slug ??
-      shareableCard.slug ??
-      shareableCard.uuid;
-
-    const currentOrganizationSlug =
-      shareableCard.organization_slug ??
-      shareableCard.organizationSlug ??
-      organizationSlug;
-
-    if (currentOrganizationSlug && cardSlug) {
-      return `${currentOrigin}/info/${currentOrganizationSlug}/${cardSlug}`;
-    }
-
-    return `${currentOrigin}/cards/${card.uuid}`;
   };
 
-  const handleOpenUrl = (card: Card) => {
-    const publicUrl = getPublicCardUrl(card);
+  const handleOpenQr = async (card: Card) => {
+    if (!organizationUuid) {
+      message.error("No se encontró la organización.");
+      return;
+    }
 
-    window.open(publicUrl, "_blank", "noopener,noreferrer");
-  };
+    try {
+      const qrBlob = await cardService.getCardQr(
+        organizationUuid,
+        card.uuid
+      );
 
-  const handleOpenQr = (card: Card) => {
-    const publicUrl = getPublicCardUrl(card);
+      const qrImageUrl = URL.createObjectURL(qrBlob);
 
-    setSelectedQrCard(card);
-    setSelectedQrUrl(publicUrl);
-    setQrModalOpen(true);
+      setSelectedQrCard(card);
+      setSelectedQrUrl(qrImageUrl);
+      setQrModalOpen(true);
+    } catch (error) {
+      console.error("Error al obtener QR de tarjeta:", error);
+      handleApiError(error);
+    }
   };
 
   const handleCloseQrModal = () => {
+    if (selectedQrUrl) {
+      URL.revokeObjectURL(selectedQrUrl);
+    }
+
     setQrModalOpen(false);
     setSelectedQrCard(null);
     setSelectedQrUrl("");
   };
 
-  const handleOpenPublicUrl = () => {
+  const handleOpenQrImage = () => {
     if (!selectedQrUrl) return;
 
     window.open(selectedQrUrl, "_blank", "noopener,noreferrer");
   };
 
-  const handleCopyQrUrl = async () => {
+  const handleDownloadQrImage = () => {
     if (!selectedQrUrl) return;
 
-    try {
-      await navigator.clipboard.writeText(selectedQrUrl);
-      message.success("URL copiada correctamente.");
-    } catch {
-      message.error("No se pudo copiar la URL.");
-    }
+    const fileName = selectedQrCard?.full_name
+      ? `qr-${selectedQrCard.full_name
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, "")}.svg`
+      : "codigo-qr.svg";
+
+    const link = document.createElement("a");
+    link.href = selectedQrUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   };
 
   const handleSearchChange = (value: string) => {
@@ -286,8 +292,9 @@ function CardsPageContent() {
 
   const selectedQrCardName =
     selectedQrCard?.full_name ??
-    `${selectedQrCard?.first_name ?? ""} ${selectedQrCard?.last_name ?? ""
-      }`.trim();
+    `${selectedQrCard?.first_name ?? ""} ${
+      selectedQrCard?.last_name ?? ""
+    }`.trim();
 
   if (organizationLoaded && !organizationUuid) {
     return (
@@ -335,8 +342,9 @@ function CardsPageContent() {
       <ConfirmModal
         open={Boolean(cardToDelete)}
         title="Eliminar tarjeta"
-        message={`¿Seguro que deseas eliminar la tarjeta "${cardToDelete?.full_name ?? ""
-          }"? Esta acción no se puede deshacer.`}
+        message={`¿Seguro que deseas eliminar la tarjeta "${
+          cardToDelete?.full_name ?? ""
+        }"? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         cancelText="Cancelar"
         loading={loading}
@@ -348,37 +356,114 @@ function CardsPageContent() {
         open={qrModalOpen}
         title="Código QR de la tarjeta"
         centered
+        zIndex={9999}
         onCancel={handleCloseQrModal}
         footer={null}
+        className="
+          [&_.ant-modal-content]:rounded-2xl
+          [&_.ant-modal-content]:border
+          [&_.ant-modal-content]:border-gray-200
+          [&_.ant-modal-content]:bg-white
+          [&_.ant-modal-content]:p-0
+          [&_.ant-modal-content]:shadow-xl
+          dark:[&_.ant-modal-content]:border-white/[0.08]
+          dark:[&_.ant-modal-content]:bg-gray-900
+
+          [&_.ant-modal-header]:rounded-t-2xl
+          [&_.ant-modal-header]:border-b
+          [&_.ant-modal-header]:border-gray-100
+          [&_.ant-modal-header]:bg-white
+          [&_.ant-modal-header]:px-6
+          [&_.ant-modal-header]:py-4
+          dark:[&_.ant-modal-header]:border-white/[0.08]
+          dark:[&_.ant-modal-header]:bg-gray-900
+
+          [&_.ant-modal-title]:text-base
+          [&_.ant-modal-title]:font-semibold
+          [&_.ant-modal-title]:text-gray-800
+          dark:[&_.ant-modal-title]:text-white
+
+          [&_.ant-modal-body]:px-6
+          [&_.ant-modal-body]:py-6
+
+          [&_.ant-modal-close]:text-gray-400
+          hover:[&_.ant-modal-close]:text-gray-600
+          dark:[&_.ant-modal-close]:text-gray-500
+          dark:hover:[&_.ant-modal-close]:text-gray-300
+        "
       >
         <div className="flex flex-col items-center text-center">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-            <QRCode value={selectedQrUrl || " "} size={220} />
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/[0.08] dark:bg-white">
+            {selectedQrUrl ? (
+              <img
+                src={selectedQrUrl}
+                alt="Código QR"
+                className="h-[260px] w-[260px] object-contain"
+              />
+            ) : (
+              <div className="flex h-[260px] w-[260px] items-center justify-center text-sm text-gray-400 dark:text-gray-500">
+                Cargando QR...
+              </div>
+            )}
           </div>
 
           <h3 className="mt-4 text-base font-semibold text-gray-800 dark:text-white">
             {selectedQrCardName || "Tarjeta digital"}
           </h3>
 
-          <p className="mt-2 max-w-full break-all rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500 dark:bg-white/[0.05] dark:text-gray-400">
-            {selectedQrUrl}
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Escanea este código para ver la tarjeta digital.
           </p>
 
           <div className="mt-5 flex w-full flex-col gap-3 sm:flex-row">
             <button
               type="button"
-              onClick={handleCopyQrUrl}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-white/[0.1] dark:text-gray-300 dark:hover:bg-white/[0.05]"
+              onClick={handleDownloadQrImage}
+              disabled={!selectedQrUrl}
+              className="
+                w-full
+                rounded-lg
+                border
+                border-gray-300
+                bg-white
+                px-4
+                py-2
+                text-sm
+                font-medium
+                text-gray-700
+                transition
+                hover:bg-gray-50
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+                dark:border-white/[0.1]
+                dark:bg-gray-800
+                dark:text-gray-300
+                dark:hover:bg-white/[0.05]
+              "
             >
-              Copiar URL
+              Descargar QR
             </button>
 
             <button
               type="button"
-              onClick={handleOpenPublicUrl}
-              className="w-full rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-600"
+              onClick={handleOpenQrImage}
+              disabled={!selectedQrUrl}
+              className="
+                w-full
+                rounded-lg
+                bg-brand-500
+                px-4
+                py-2
+                text-sm
+                font-medium
+                text-white
+                transition
+                hover:bg-brand-600
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
             >
-              Abrir tarjeta
+              Abrir QR
             </button>
           </div>
         </div>

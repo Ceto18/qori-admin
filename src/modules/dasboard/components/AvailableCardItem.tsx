@@ -56,11 +56,15 @@ export default function AvailableCardItem({
     try {
       setOpeningQr(true);
 
-      const qrUrl = await getCardQr(organizationUuid, card.uuid);
+      const qrBlob = await getCardQr(organizationUuid, card.uuid);
 
-      if (!qrUrl) return;
+      if (!qrBlob) {
+        return;
+      }
 
-      window.open(qrUrl, "_blank", "noopener,noreferrer");
+      const qrImageUrl = URL.createObjectURL(qrBlob);
+
+      window.open(qrImageUrl, "_blank", "noopener,noreferrer");
     } finally {
       setOpeningQr(false);
     }

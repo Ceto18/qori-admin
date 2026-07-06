@@ -80,7 +80,7 @@ interface CardState {
   getCardQr: (
     organizationUuid: string,
     cardUuid: string
-  ) => Promise<string | null>;
+  ) => Promise<Blob | null>;
 
   clearSelectedCard: () => void;
 }
@@ -400,7 +400,10 @@ export const useCardStore = create<CardState>((set, get) => ({
     }
   },
 
-  getCardQr: async (organizationUuid: string, cardUuid: string) => {
+  getCardQr: async (
+    organizationUuid: string,
+    cardUuid: string
+  ): Promise<Blob | null> => {
     try {
       if (!organizationUuid || typeof organizationUuid !== "string") {
         throw new Error("No se encontró el UUID de la organización.");
@@ -410,12 +413,12 @@ export const useCardStore = create<CardState>((set, get) => ({
         throw new Error("No se encontró el UUID de la tarjeta.");
       }
 
-      const response = await cardService.getCardQr(
+      const qrBlob = await cardService.getCardQr(
         organizationUuid,
         cardUuid
       );
 
-      return response?.data ?? null;
+      return qrBlob;
     } catch (error) {
       console.error("Error getCardQr:", error);
       handleApiError(error);

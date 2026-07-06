@@ -51,9 +51,12 @@ export const cardService = {
   getCardQr: async (
     organizationUuid: string,
     cardUuid: string
-  ): Promise<CardQrResponse> => {
+  ): Promise<Blob> => {
     const res = await api.get(
-      `/organization/${organizationUuid}/cards/${cardUuid}/codeqr`
+      `/organization/${organizationUuid}/cards/${cardUuid}/codeqr`,
+      {
+        responseType: "blob",
+      }
     );
 
     return res.data;
