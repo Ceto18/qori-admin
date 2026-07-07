@@ -107,18 +107,45 @@ export default function ClassicTemplate({
                         </p>
 
                         {(data.institution || data.profession) && (
-                            <div className="mt-3 flex flex-col items-center gap-1">
+                            <div className="mt-3 flex flex-col items-center gap-1.5">
                                 {data.institution && (
-                                    <p className="max-w-full break-words rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500 dark:bg-white/[0.06] dark:text-gray-400">
+                                    <p className="max-w-full break-words text-xs font-semibold uppercase tracking-[0.14em] text-gray-400">
                                         {data.institution}
                                     </p>
                                 )}
 
                                 {data.profession && (
-                                    <p className="max-w-full break-words text-xs font-medium text-gray-400">
+                                    <p className="max-w-full break-words rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500 dark:bg-white/[0.06] dark:text-gray-400">
                                         {data.profession}
                                     </p>
                                 )}
+                            </div>
+                        )}
+
+                        {filledNetworks.length > 0 && (
+                            <div className="mt-4 flex justify-center">
+                                <div className="flex max-w-full gap-2 overflow-x-auto rounded-full border border-gray-200 bg-gray-50 px-2 py-2 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.04]">
+                                    {filledNetworks
+                                        .slice(0, 6)
+                                        .map((network, index) => (
+                                            <button
+                                                key={`${network.uuid}-${index}`}
+                                                type="button"
+                                                disabled={!network.value}
+                                                title={
+                                                    network.name ||
+                                                    "Red social"
+                                                }
+                                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-gray-600 shadow-sm transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white/[0.08] dark:text-white"
+                                            >
+                                                <NetworkMiniIcon
+                                                    icon={network.icon_url}
+                                                    name={network.name}
+                                                    color={primaryColor}
+                                                />
+                                            </button>
+                                        ))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -155,25 +182,6 @@ export default function ClassicTemplate({
                                         </span>
                                     ))}
                                 </div>
-                            </div>
-                        </SectionTitle>
-                    )}
-
-                    {filledNetworks.length > 0 && (
-                        <SectionTitle
-                            icon={<Link2 size={14} />}
-                            title="Redes sociales"
-                        >
-                            <div className="max-h-36 space-y-2 overflow-y-auto pr-1">
-                                {filledNetworks.map((network, index) => (
-                                    <NetworkInfo
-                                        key={`${network.uuid}-${index}`}
-                                        name={network.name}
-                                        icon={network.icon_url}
-                                        value={network.value}
-                                        color={primaryColor}
-                                    />
-                                ))}
                             </div>
                         </SectionTitle>
                     )}
@@ -286,39 +294,7 @@ function Info({
     );
 }
 
-function NetworkInfo({
-    name,
-    icon,
-    value,
-    color,
-}: {
-    name?: string;
-    icon?: string | null;
-    value?: string;
-    color: string;
-}) {
-    if (!name && !value) return null;
-
-    return (
-        <div className="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 px-3 py-3 text-sm text-gray-600 transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-md dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-gray-300 dark:hover:bg-white/[0.07]">
-            <NetworkIcon icon={icon} name={name} color={color} />
-
-            <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-bold text-gray-800 dark:text-gray-100">
-                    {name || "Red social"}
-                </p>
-
-                {value && (
-                    <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                        {value}
-                    </p>
-                )}
-            </div>
-        </div>
-    );
-}
-
-function NetworkIcon({
+function NetworkMiniIcon({
     icon,
     name,
     color,
@@ -328,23 +304,14 @@ function NetworkIcon({
     color: string;
 }) {
     if (!icon) {
-        return (
-            <span
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
-                style={{ backgroundColor: color }}
-            >
-                <Link2 size={16} />
-            </span>
-        );
+        return <Link2 size={16} style={{ color }} />;
     }
 
     return (
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-100 bg-white shadow-sm dark:border-white/[0.08] dark:bg-white/[0.06]">
-            <img
-                src={icon}
-                alt={name || "Red social"}
-                className="h-4.5 w-4.5 object-contain"
-            />
-        </span>
+        <img
+            src={icon}
+            alt={name || "Red social"}
+            className="h-[18px] w-[18px] object-contain"
+        />
     );
 }

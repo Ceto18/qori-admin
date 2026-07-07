@@ -5,7 +5,7 @@ import type { PublicPlansResponse } from "../types";
 
 export const publicPlanService = {
   getActivePlans: async (): Promise<PublicPlansResponse> => {
-    const res = await api.get("/public/plans/active");
+    const res = await api.get("/plans/active");
 
     return res.data;
   },

@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { CARD_TEMPLATES } from "../constants/cardTemplates";
-import { Card, CardFormValues, SocialNetwork } from "../types";
+import { Card, CardFormValues, CardDocument,SocialNetwork } from "../types";
 import { socialNetworkService } from "../services/socialNetworkService";
 
 import CardPreview from "./CardPreview";
@@ -147,60 +147,42 @@ export default function CardForm({
                     }))
                     : [{ name: "" }],
 
-            documents: [],
+            documents: initialData.documents ?? [],
 
             networks:
                 initialData.networks && initialData.networks.length > 0
                     ? initialData.networks.map((network) => ({
-                          /**
-                           * UUID del registro network de la tarjeta.
-                           */
-                          uuid: network.uuid ?? "",
-
-                          value: network.value ?? "",
-                          label: network.label ?? "",
-
-                          /**
-                           * UUID real de la red social.
-                           * Este es el que se envía como networks[0][red_social].
-                           */
-                          red_social:
-                              network.red_social ??
-                              network.red_social_uuid ??
-                              network.type?.uuid ??
-                              "",
-
-                          red_social_uuid:
-                              network.red_social_uuid ??
-                              network.red_social ??
-                              network.type?.uuid ??
-                              "",
-
-                          /**
-                           * Datos visuales para el formulario.
-                           */
-                          name: network.type?.name ?? network.name ?? "",
-                          icon_url:
-                              network.type?.icon_url ??
-                              network.icon_url ??
-                              null,
-
-                          /**
-                           * Objeto completo que devuelve el backend.
-                           */
-                          type: network.type,
-                      }))
+                        uuid: network.uuid ?? "",
+                        value: network.value ?? "",
+                        label: network.label ?? "",
+                        red_social:
+                            network.red_social ??
+                            network.red_social_uuid ??
+                            network.type?.uuid ??
+                            "",
+                        red_social_uuid:
+                            network.red_social_uuid ??
+                            network.red_social ??
+                            network.type?.uuid ??
+                            "",
+                        name: network.type?.name ?? network.name ?? "",
+                        icon_url:
+                            network.type?.icon_url ??
+                            network.icon_url ??
+                            null,
+                        type: network.type,
+                    }))
                     : [
-                          {
-                              uuid: "",
-                              value: "",
-                              label: "",
-                              red_social: "",
-                              red_social_uuid: "",
-                              name: "",
-                              icon_url: null,
-                          },
-                      ],
+                        {
+                            uuid: "",
+                            value: "",
+                            label: "",
+                            red_social: "",
+                            red_social_uuid: "",
+                            name: "",
+                            icon_url: null,
+                        },
+                    ],
         });
     }, [
         initialData,
@@ -362,9 +344,9 @@ export default function CardForm({
             networks: (prev.networks ?? []).map((network, networkIndex) =>
                 networkIndex === index
                     ? {
-                          ...network,
-                          [key]: value ?? "",
-                      }
+                        ...network,
+                        [key]: value ?? "",
+                    }
                     : network
             ),
         }));

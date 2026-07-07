@@ -57,9 +57,22 @@ export interface CardNetwork {
 }
 
 export interface CardDocument {
-  uuid: string;
+  /**
+   * UUID del documento guardado en backend.
+   * Cuando el documento es nuevo, todavía no existe UUID.
+   */
+  uuid?: string;
+
+  /**
+   * Nombre original o visible del documento.
+   */
   name: string;
-  document_url: string;
+
+  /**
+   * URL pública del documento guardado en backend.
+   * Solo existe cuando el documento ya fue recuperado desde la API.
+   */
+  document_url?: string;
 }
 
 export interface Card {
@@ -171,9 +184,12 @@ export interface CardFormValues {
   qualities: CardQuality[];
 
   /**
-   * Para create/update aquí solo van archivos nuevos.
+   * En create/update puede contener:
+   * - File: documentos nuevos seleccionados desde el formulario.
+   * - CardDocument: documentos ya guardados que vienen del backend.
+   * - null: espacios vacíos temporales del formulario.
    */
-  documents: Array<File | null>;
+  documents: Array<File | CardDocument | null>;
 
   networks: CardNetwork[];
 }

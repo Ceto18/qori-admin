@@ -1,7 +1,11 @@
 // src/app/layout.tsx
+
+import Script from "next/script";
 import { Outfit } from "next/font/google";
+
 import "./globals.css";
 import "flatpickr/dist/flatpickr.css";
+
 import { ThemeProvider } from "@/shared/context/ThemeContext";
 import { Toaster } from "react-hot-toast";
 
@@ -45,6 +49,11 @@ export default function RootLayout({
                         }}
                     />
                 </ThemeProvider>
+
+                <Script
+                    src="https://checkout.culqi.com/js/v4"
+                    strategy="afterInteractive"
+                />
             </body>
         </html>
     );

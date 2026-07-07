@@ -82,6 +82,7 @@ interface CardState {
     cardUuid: string
   ) => Promise<Blob | null>;
 
+  clearCards: () => void;
   clearSelectedCard: () => void;
 }
 
@@ -194,9 +195,12 @@ export const useCardStore = create<CardState>((set, get) => ({
         perPage: Number(response.data?.per_page ?? perPage),
         total: response.data?.total ?? 0,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetchCards:", error);
-      handleApiError(error);
+
+      if (error?.response?.status !== 403) {
+        handleApiError(error);
+      }
 
       set({
         cards: [],
@@ -424,6 +428,20 @@ export const useCardStore = create<CardState>((set, get) => ({
       handleApiError(error);
       return null;
     }
+  },
+
+  clearCards: () => {
+    set({
+      cards: [],
+      selectedCard: null,
+      loading: false,
+      saving: false,
+      deleting: false,
+      currentPage: 1,
+      totalPages: 1,
+      perPage: 10,
+      total: 0,
+    });
   },
 
   clearSelectedCard: () => {

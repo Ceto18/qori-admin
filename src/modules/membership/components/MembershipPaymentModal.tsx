@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import type { PublicPlan } from "@/modules/public-plans/types";
-import { DiscountCode } from "@/modules/discountCodes/types";
-import { useDiscountCodeStore } from "@/modules/discountCodes/store/useDiscountCodeStore";
+import { useSubscriptionStore } from "@/modules/plans/subscriptions/store/useSubscriptionStore";
 
 type Props = {
     open: boolean;
@@ -41,73 +40,23 @@ function CloseIcon() {
     );
 }
 
-function isDiscountAvailable(discount: DiscountCode) {
-    if (!discount.active) return false;
-
-    const now = new Date();
-
-    if (discount.starts_at && new Date(discount.starts_at) > now) {
-        return false;
-    }
-
-    if (discount.expires_at && new Date(discount.expires_at) < now) {
-        return false;
-    }
-
-    if (
-        discount.max_uses !== null &&
-        Number(discount.used_count) >= Number(discount.max_uses)
-    ) {
-        return false;
-    }
-
-    return true;
-}
-
-function calculateDiscountAmount(
-    planPrice: number,
-    discount: DiscountCode | null
-) {
-    if (!discount) return 0;
-
-    const value = Number(discount.value);
-
-    if (Number.isNaN(value)) return 0;
-
-    if (discount.type === "percentage") {
-        const percentage = Math.min(Math.max(value, 0), 100);
-        return planPrice * (percentage / 100);
-    }
-
-    return Math.min(value, planPrice);
-}
-
 export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
     const [discountCode, setDiscountCode] = useState("");
-    const [appliedDiscount, setAppliedDiscount] =
-        useState<DiscountCode | null>(null);
-    const [discountError, setDiscountError] = useState("");
 
-    const { discountCodes, loading, fetchDiscountCodes } =
-        useDiscountCodeStore();
-
-    useEffect(() => {
-        if (!open) return;
-
-        fetchDiscountCodes({
-            page: 1,
-            perPage: 100,
-            search: "",
-        });
-    }, [open, fetchDiscountCodes]);
+    const {
+        preview,
+        loadingPreview,
+        previewError,
+        fetchPreview,
+        clearPreview,
+    } = useSubscriptionStore();
 
     useEffect(() => {
         if (!open) {
             setDiscountCode("");
-            setAppliedDiscount(null);
-            setDiscountError("");
+            clearPreview();
         }
-    }, [open]);
+    }, [open, clearPreview]);
 
     const planPrice = useMemo(() => {
         if (!plan) return 0;
@@ -117,64 +66,115 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
         return Number.isNaN(value) ? 0 : value;
     }, [plan]);
 
-    const discountAmount = useMemo(() => {
-        return calculateDiscountAmount(planPrice, appliedDiscount);
-    }, [planPrice, appliedDiscount]);
+    const originalPrice = preview?.original_price ?? planPrice;
+    const discountAmount = preview?.discount_amount ?? 0;
+    const total = preview?.final_price ?? planPrice;
+    const appliedDiscount = preview?.discount_code ?? null;
 
-    const total = Math.max(planPrice - discountAmount, 0);
+    const handleApplyDiscount = async () => {
+        if (!plan) return;
 
-    const handleApplyDiscount = () => {
+        const planUuid = plan.uuid;
+
+        if (!planUuid) {
+            console.error("El plan seleccionado no tiene uuid:", plan);
+            return;
+        }
+
         const normalizedCode = discountCode.trim().toUpperCase();
 
-        setDiscountError("");
-        setAppliedDiscount(null);
+        clearPreview();
 
         if (!normalizedCode) {
-            setDiscountError("Ingresa un código de descuento.");
             return;
         }
 
-        const foundDiscount = discountCodes.find(
-            (discount) =>
-                discount.code.trim().toUpperCase() === normalizedCode
-        );
-
-        if (!foundDiscount) {
-            setDiscountError("El código ingresado no existe.");
-            return;
-        }
-
-        if (!isDiscountAvailable(foundDiscount)) {
-            setDiscountError("El código ingresado no está disponible.");
-            return;
-        }
-
-        setAppliedDiscount(foundDiscount);
+        await fetchPreview({
+            plan_uuid: planUuid,
+            discount_code: normalizedCode,
+        });
     };
 
     const handleRemoveDiscount = () => {
         setDiscountCode("");
-        setAppliedDiscount(null);
-        setDiscountError("");
+        clearPreview();
     };
 
     const handlePayNow = () => {
         if (!plan) return;
 
-        console.log("Abrir Culqi con:", {
-            plan_slug: plan.slug,
-            plan_name: plan.name,
-            discount_code: appliedDiscount?.code ?? null,
-            subtotal: planPrice,
-            discount: discountAmount,
-            total,
+        if (!plan.uuid) {
+            console.error("El plan seleccionado no tiene uuid:", plan);
+            return;
+        }
+
+        if (!window.Culqi) {
+            console.error("Culqi todavía no está cargado.");
+            return;
+        }
+
+        const publicKey = process.env.NEXT_PUBLIC_CULQI_PUBLIC_KEY;
+
+        if (!publicKey) {
+            console.error("Falta configurar NEXT_PUBLIC_CULQI_PUBLIC_KEY.");
+            return;
+        }
+
+        const amountInCents = Math.round(total * 100);
+
+        window.Culqi.publicKey = publicKey;
+
+        window.Culqi.settings({
+            title: "Qori ID",
+            currency: "PEN",
+            amount: amountInCents,
+            description: plan.name,
         });
 
-        // Aquí luego conectaremos Culqi:
-        // 1. Abrir Culqi Checkout
-        // 2. Recibir token de Culqi
-        // 3. Enviar token + plan_slug + discount_code al backend
-        // 4. Backend confirma pago y activa membresía
+        window.Culqi.options?.({
+            lang: "es",
+            installments: false,
+            paymentMethods: {
+                tarjeta: true,
+                yape: false,
+                bancaMovil: false,
+                agente: false,
+                billetera: false,
+                cuotealo: false,
+            },
+        });
+
+        window.culqi = async () => {
+            if (window.Culqi?.token) {
+                const tokenId = window.Culqi.token.id;
+
+                console.log("TOKEN CULQI:", tokenId);
+
+                console.log("Enviar al backend:", {
+                    plan_uuid: plan.uuid,
+                    discount_code: appliedDiscount?.code ?? null,
+                    culqi_token: tokenId,
+                });
+
+                /*
+                    Luego esto lo cambiarás por tu store:
+
+                    await checkoutSubscription({
+                        plan_uuid: plan.uuid,
+                        discount_code: appliedDiscount?.code ?? null,
+                        culqi_token: tokenId,
+                    });
+                */
+
+                return;
+            }
+
+            if (window.Culqi?.error) {
+                console.error("Error Culqi:", window.Culqi.error);
+            }
+        };
+
+        window.Culqi.open();
     };
 
     if (!open || !plan) return null;
@@ -222,9 +222,15 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                                 <h3 className="mt-1 text-lg font-semibold text-gray-800 dark:text-white/90">
                                     {plan.name}
                                 </h3>
+
+                                {plan.description && (
+                                    <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
+                                        {plan.description}
+                                    </p>
+                                )}
                             </div>
 
-                            <p className="text-lg font-bold text-gray-800 dark:text-white/90">
+                            <p className="shrink-0 text-lg font-bold text-gray-800 dark:text-white/90">
                                 {formatPrice(plan.price)}
                             </p>
                         </div>
@@ -250,6 +256,34 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                                 </p>
                             </div>
                         </div>
+
+                        {plan.features?.length > 0 && (
+                            <div className="mt-4">
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Incluye:
+                                </p>
+
+                                <ul className="mt-2 space-y-2">
+                                    {[...plan.features]
+                                        .sort(
+                                            (a, b) =>
+                                                a.sort_order - b.sort_order
+                                        )
+                                        .map((feature) => (
+                                            <li
+                                                key={`${feature.description}-${feature.sort_order}`}
+                                                className="flex gap-2 text-sm text-gray-500 dark:text-gray-400"
+                                            >
+                                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
+
+                                                <span>
+                                                    {feature.description}
+                                                </span>
+                                            </li>
+                                        ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -261,11 +295,16 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                             <input
                                 value={discountCode}
                                 onChange={(event) => {
-                                    setDiscountCode(event.target.value);
-                                    setDiscountError("");
+                                    setDiscountCode(
+                                        event.target.value.toUpperCase()
+                                    );
+
+                                    if (previewError) {
+                                        clearPreview();
+                                    }
                                 }}
                                 placeholder="Ej: ABCD123"
-                                disabled={!!appliedDiscount}
+                                disabled={!!appliedDiscount || loadingPreview}
                                 className="h-11 flex-1 rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 disabled:bg-gray-50 disabled:text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-brand-500"
                             />
 
@@ -281,26 +320,30 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                                 <button
                                     type="button"
                                     onClick={handleApplyDiscount}
-                                    disabled={loading}
+                                    disabled={loadingPreview}
                                     className="inline-flex h-11 items-center justify-center rounded-lg border border-gray-300 px-5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                                 >
-                                    {loading ? "Validando..." : "Aplicar"}
+                                    {loadingPreview
+                                        ? "Validando..."
+                                        : "Aplicar"}
                                 </button>
                             )}
                         </div>
 
-                        {discountError && (
+                        {previewError && (
                             <p className="mt-2 text-sm text-red-500">
-                                {discountError}
+                                {previewError}
                             </p>
                         )}
 
                         {appliedDiscount && (
                             <p className="mt-2 text-sm text-green-600 dark:text-green-400">
                                 Código aplicado: {appliedDiscount.code}
-                                {appliedDiscount.name
-                                    ? ` - ${appliedDiscount.name}`
-                                    : ""}
+                                {appliedDiscount.type === "percentage"
+                                    ? ` - ${appliedDiscount.value}% de descuento`
+                                    : ` - ${formatPrice(
+                                          appliedDiscount.value
+                                      )} de descuento`}
                             </p>
                         )}
                     </div>
@@ -312,7 +355,7 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                             </span>
 
                             <span className="font-medium text-gray-800 dark:text-white/90">
-                                {formatPrice(planPrice)}
+                                {formatPrice(originalPrice)}
                             </span>
                         </div>
 

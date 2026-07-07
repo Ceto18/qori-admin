@@ -3,11 +3,13 @@
 import type { ReactNode } from "react";
 import {
     BadgeCheck,
-    Briefcase,
+    BriefcaseBusiness,
     Building2,
+    ChevronRight,
     FileText,
     Link2,
     MapPin,
+    Sparkles,
     UserRound,
     WalletCards,
 } from "lucide-react";
@@ -19,6 +21,21 @@ interface Props {
     profilePreview: string;
     bannerPreview: string;
 }
+
+type DocumentLike =
+    | File
+    | string
+    | {
+          name?: string;
+          file_name?: string;
+          filename?: string;
+          original_name?: string;
+          originalName?: string;
+          title?: string;
+          url?: string;
+          path?: string;
+      }
+    | null;
 
 export default function ModernTemplate({
     data,
@@ -39,299 +56,260 @@ export default function ModernTemplate({
         quality.name?.trim()
     );
 
-    const filledDocuments = documents.filter(Boolean);
+    const filledDocuments = documents.filter(Boolean) as DocumentLike[];
 
     const filledNetworks = networks.filter(
         (network) =>
             network.uuid?.trim() ||
             network.name?.trim() ||
-            network.value?.trim()
+            network.value?.trim() ||
+            network.icon_url?.trim()
     );
 
     return (
-        <div
-            className="mx-auto w-full min-w-[320px] max-w-[390px] overflow-hidden rounded-[34px] p-[1.5px] shadow-[0_24px_70px_rgba(15,23,42,0.18)]"
-            style={{
-                background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-            }}
-        >
-            <div className="overflow-hidden rounded-[32px] bg-white dark:bg-gray-950">
-                <div className="relative">
-                    <div
-                        className="relative h-44 overflow-hidden bg-cover bg-center"
-                        style={{
-                            backgroundColor: primaryColor,
-                            backgroundImage: bannerImage
-                                ? `url(${bannerImage})`
-                                : `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-                        }}
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/20 to-black/60" />
+        <div className="mx-auto w-full min-w-[320px] max-w-[390px] overflow-hidden rounded-[36px] bg-[#f2f5fb] shadow-[0_28px_80px_rgba(15,23,42,0.18)] dark:bg-[#070b12]">
+            <div className="relative">
+                <div
+                    className="absolute inset-x-0 top-0 h-[250px]"
+                    style={{
+                        background: bannerImage
+                            ? `
+                                linear-gradient(135deg, ${secondaryColor}66, ${primaryColor}4D),
+                                linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.28)),
+                                url(${bannerImage})
+                              `
+                            : `
+                                radial-gradient(circle at 15% 20%, ${primaryColor} 0%, transparent 32%),
+                                radial-gradient(circle at 85% 10%, ${secondaryColor} 0%, transparent 34%),
+                                linear-gradient(135deg, ${secondaryColor}, ${primaryColor})
+                              `,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                    }}
+                />
 
-                        <div
-                            className="absolute -right-12 -top-12 h-40 w-40 rounded-full opacity-40 blur-3xl"
-                            style={{ backgroundColor: primaryColor }}
-                        />
+                <div
+                    className="absolute inset-x-0 top-[176px] h-[92px]"
+                    style={{
+                        background: `linear-gradient(180deg, transparent, #f2f5fb 78%)`,
+                    }}
+                />
 
-                        <div
-                            className="absolute -bottom-12 -left-12 h-40 w-40 rounded-full opacity-35 blur-3xl"
-                            style={{ backgroundColor: secondaryColor }}
-                        />
+                <div className="absolute inset-x-0 top-[176px] h-[92px] hidden dark:block dark:bg-gradient-to-b dark:from-transparent dark:to-[#070b12]" />
 
-                        <div className="absolute left-5 top-5 rounded-full border border-white/20 bg-white/20 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-white shadow-sm backdrop-blur-md">
-                            Tarjeta digital
-                        </div>
+                <div
+                    className="absolute -right-24 top-8 h-64 w-64 rounded-full opacity-25 blur-3xl"
+                    style={{ backgroundColor: primaryColor }}
+                />
 
-                        <div className="absolute bottom-5 right-5 flex items-center gap-2 rounded-full bg-black/25 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-md">
-                            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.2)]" />
-                            Activa
-                        </div>
+                <div
+                    className="absolute -left-24 top-40 h-64 w-64 rounded-full opacity-20 blur-3xl"
+                    style={{ backgroundColor: secondaryColor }}
+                />
+
+                <div className="relative px-4 pb-5 pt-4">
+                    <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-white shadow-sm backdrop-blur-md">
+                            <Sparkles size={12} />
+                            Modern
+                        </span>
+
+                        <span className="rounded-full bg-black/20 px-3 py-1.5 text-[11px] font-bold text-white/90 shadow-sm backdrop-blur-md">
+                            Digital ID
+                        </span>
                     </div>
 
-                    <div className="absolute left-1/2 top-full z-10 -translate-x-1/2 -translate-y-1/2">
-                        <div className="rounded-[2rem] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.28)] dark:bg-gray-950">
+                    <div className="mt-5 overflow-hidden rounded-[32px] border border-white/50 bg-white/92 shadow-[0_24px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0d1320]/92">
+                        <div className="relative p-4">
                             <div
-                                className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-[1.65rem] border-[3px] bg-gray-100 text-3xl font-bold text-white dark:bg-gray-800"
-                                style={{ borderColor: primaryColor }}
-                            >
-                                {profileImage ? (
-                                    <img
-                                        src={profileImage}
-                                        alt={
-                                            data.full_name || "Foto de perfil"
-                                        }
-                                        className="h-full w-full object-cover"
+                                className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full opacity-10 blur-3xl"
+                                style={{ backgroundColor: primaryColor }}
+                            />
+
+                            <div
+                                className="pointer-events-none absolute -bottom-20 -left-20 h-48 w-48 rounded-full opacity-10 blur-3xl"
+                                style={{ backgroundColor: secondaryColor }}
+                            />
+
+                            <div className="relative flex items-start gap-4">
+                                <div className="min-w-0 flex-1 pt-1">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
+                                        Perfil profesional
+                                    </p>
+
+                                    <h3 className="mt-2 break-words text-[26px] font-black leading-[1.02] tracking-[-0.045em] text-gray-950 dark:text-white">
+                                        {data.full_name || "Nombre completo"}
+                                    </h3>
+
+                                    <p
+                                        className="mt-2 break-words text-sm font-black"
+                                        style={{ color: primaryColor }}
+                                    >
+                                        {data.position || "Cargo profesional"}
+                                    </p>
+
+                                    {data.institution && (
+                                        <p className="mt-2 line-clamp-2 break-words text-xs font-semibold leading-5 text-gray-500 dark:text-gray-400">
+                                            {data.institution}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="relative shrink-0">
+                                    <div
+                                        className="absolute -inset-2 rounded-[30px] opacity-20 blur-xl"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
+                                        }}
                                     />
-                                ) : (
-                                    <span
-                                        className="flex h-full w-full items-center justify-center"
+
+                                    <div
+                                        className="relative rounded-[28px] p-[3px]"
                                         style={{
                                             background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
                                         }}
                                     >
-                                        {data.full_name
-                                            ?.charAt(0)
-                                            ?.toUpperCase() || (
-                                            <UserRound size={42} />
-                                        )}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="px-5 pb-5 pt-16">
-                    <div className="max-h-[500px] overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-200 dark:scrollbar-thumb-white/10">
-                        <div className="text-center">
-                            <h3 className="break-words text-[22px] font-extrabold leading-tight text-gray-950 dark:text-white">
-                                {data.full_name || "Nombre completo"}
-                            </h3>
-
-                            <p
-                                className="mt-1 break-words text-sm font-bold"
-                                style={{ color: primaryColor }}
-                            >
-                                {data.position || "Cargo"}
-                            </p>
-
-                            {data.institution && (
-                                <p className="mt-2 break-words text-xs font-medium text-gray-400">
-                                    {data.institution}
-                                </p>
-                            )}
-                        </div>
-
-                        {filledNetworks.length > 0 && (
-                            <div className="mt-5 grid grid-cols-2 gap-3">
-                                {filledNetworks
-                                    .slice(0, 2)
-                                    .map((network, index) => (
-                                        <QuickNetworkAction
-                                            key={`${network.uuid}-${index}`}
-                                            name={network.name}
-                                            icon={network.icon_url}
-                                            value={network.value}
-                                            color={
-                                                index === 0
-                                                    ? primaryColor
-                                                    : secondaryColor
-                                            }
-                                        />
-                                    ))}
-                            </div>
-                        )}
-
-                        {(data.position || data.profession) && (
-                            <div className="mt-5 max-h-24 overflow-y-auto rounded-3xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-3 shadow-sm dark:border-white/[0.06] dark:from-white/[0.04] dark:to-white/[0.02]">
-                                <div className="flex flex-wrap justify-center gap-2">
-                                    {data.position && (
-                                        <span
-                                            className="inline-flex max-w-full items-center gap-1.5 break-words rounded-full px-3 py-1.5 text-xs font-bold text-white shadow-sm"
-                                            style={{
-                                                backgroundColor: primaryColor,
-                                            }}
-                                        >
-                                            <Briefcase size={13} />
-                                            {data.position}
-                                        </span>
-                                    )}
-
-                                    {data.profession && (
-                                        <span className="inline-flex max-w-full items-center gap-1.5 break-words rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-600 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-gray-300">
-                                            {data.profession}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {data.description ? (
-                            <div className="mt-5 max-h-32 overflow-y-auto rounded-3xl border border-gray-100 bg-gray-50/80 px-4 py-4 shadow-sm dark:border-white/[0.06] dark:bg-white/[0.04]">
-                                <p className="break-words text-center text-sm leading-6 text-gray-600 dark:text-gray-300">
-                                    {data.description}
-                                </p>
-                            </div>
-                        ) : (
-                            <p className="mt-5 rounded-3xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-center text-sm leading-6 text-gray-400 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-gray-500">
-                                Agrega una breve descripción para que tus
-                                clientes conozcan más sobre ti o tu empresa.
-                            </p>
-                        )}
-
-                        <div className="mt-5 space-y-3">
-                            <InfoItem
-                                icon={<Building2 size={17} />}
-                                label="Empresa"
-                                value={data.institution}
-                            />
-
-                            <InfoItem
-                                icon={<MapPin size={17} />}
-                                label="Ubicación"
-                                value={data.ubication}
-                            />
-                        </div>
-
-                        {filledQualities.length > 0 && (
-                            <SectionTitle
-                                icon={<BadgeCheck size={14} />}
-                                title="Características"
-                            >
-                                <div className="max-h-28 overflow-y-auto rounded-3xl border border-gray-100 bg-gray-50/80 p-3 dark:border-white/[0.06] dark:bg-white/[0.04]">
-                                    <div className="flex flex-wrap gap-2">
-                                        {filledQualities.map(
-                                            (quality, index) => (
+                                        <div className="flex h-[98px] w-[98px] items-center justify-center overflow-hidden rounded-[25px] bg-gray-100 text-3xl font-black text-white dark:bg-white/10">
+                                            {profileImage ? (
+                                                <img
+                                                    src={profileImage}
+                                                    alt={
+                                                        data.full_name ||
+                                                        "Foto de perfil"
+                                                    }
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            ) : (
                                                 <span
-                                                    key={`${quality.name}-${index}`}
-                                                    className="max-w-full break-words rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-600 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-gray-300"
+                                                    className="flex h-full w-full items-center justify-center"
+                                                    style={{
+                                                        background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
+                                                    }}
                                                 >
-                                                    {quality.name}
+                                                    {data.full_name
+                                                        ?.charAt(0)
+                                                        ?.toUpperCase() || (
+                                                        <UserRound size={38} />
+                                                    )}
                                                 </span>
-                                            )
-                                        )}
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </SectionTitle>
+                            </div>
+
+                            {filledNetworks.length > 0 && (
+                                <SocialConstellation
+                                    networks={filledNetworks}
+                                    primaryColor={primaryColor}
+                                    secondaryColor={secondaryColor}
+                                />
+                            )}
+
+                            {(data.profession || data.ubication) && (
+                                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                                    <MiniInfo
+                                        icon={
+                                            <BriefcaseBusiness size={15} />
+                                        }
+                                        label="Área"
+                                        value={data.profession}
+                                        color={primaryColor}
+                                    />
+
+                                    <MiniInfo
+                                        icon={<MapPin size={15} />}
+                                        label="Lugar"
+                                        value={data.ubication}
+                                        color={secondaryColor}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="mt-4 max-h-[500px] overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 dark:scrollbar-thumb-white/10">
+                        <section className="rounded-[28px] border border-white bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.05]">
+                            <SectionHeader
+                                icon={<UserRound size={14} />}
+                                title="Presentación"
+                            />
+
+                            <p className="mt-3 max-h-32 overflow-y-auto break-words text-sm leading-6 text-gray-600 dark:text-gray-300">
+                                {data.description ||
+                                    "Agrega una breve descripción para que tus clientes conozcan más sobre ti, tu empresa o tus servicios."}
+                            </p>
+                        </section>
+
+                        {(data.institution || data.ubication) && (
+                            <section className="mt-4 grid grid-cols-1 gap-2.5">
+                                <InfoRow
+                                    icon={<Building2 size={17} />}
+                                    label="Empresa"
+                                    value={data.institution}
+                                    color={primaryColor}
+                                />
+                            </section>
                         )}
 
-                        {filledNetworks.length > 0 && (
-                            <SectionTitle
-                                icon={<Link2 size={14} />}
-                                title="Redes sociales"
-                            >
-                                <div className="max-h-40 space-y-3 overflow-y-auto pr-1">
-                                    {filledNetworks.map((network, index) => (
-                                        <NetworkItem
-                                            key={`${network.uuid}-${index}`}
-                                            name={network.name}
-                                            icon={network.icon_url}
-                                            value={network.value}
-                                        />
+                        {filledQualities.length > 0 && (
+                            <section className="mt-4 rounded-[28px] border border-white bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.05]">
+                                <SectionHeader
+                                    icon={<BadgeCheck size={14} />}
+                                    title="Características"
+                                />
+
+                                <div className="mt-3 flex max-h-28 flex-wrap gap-2 overflow-y-auto">
+                                    {filledQualities.map((quality, index) => (
+                                        <span
+                                            key={`${quality.name}-${index}`}
+                                            className="max-w-full break-words rounded-2xl bg-gray-100 px-3 py-2 text-xs font-black text-gray-600 dark:bg-white/[0.08] dark:text-gray-300"
+                                        >
+                                            {quality.name}
+                                        </span>
                                     ))}
                                 </div>
-                            </SectionTitle>
+                            </section>
                         )}
 
                         {filledDocuments.length > 0 && (
-                            <SectionTitle
-                                icon={<FileText size={14} />}
-                                title="Documentos"
-                            >
-                                <div className="max-h-40 space-y-3 overflow-y-auto pr-1">
+                            <section className="mt-4 rounded-[28px] border border-white bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.05]">
+                                <SectionHeader
+                                    icon={<FileText size={14} />}
+                                    title="Documentos"
+                                />
+
+                                <div className="mt-3 max-h-40 space-y-2 overflow-y-auto pr-1">
                                     {filledDocuments.map((document, index) => (
-                                        <div
+                                        <DocumentRow
                                             key={index}
-                                            className="group flex items-center gap-3 rounded-3xl border border-gray-100 bg-gray-50 px-3 py-3 transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-md dark:border-white/[0.06] dark:bg-white/[0.04] dark:hover:bg-white/[0.07]"
-                                        >
-                                            <div
-                                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm"
-                                                style={{
-                                                    background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-                                                }}
-                                            >
-                                                <FileText size={17} />
-                                            </div>
-
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-xs font-medium text-gray-400">
-                                                    Documento
-                                                </p>
-
-                                                <p className="truncate text-sm font-bold text-gray-700 dark:text-gray-200">
-                                                    {document instanceof File
-                                                        ? document.name
-                                                        : `Documento ${
-                                                              index + 1
-                                                          }`}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </SectionTitle>
-                        )}
-
-                        {filledNetworks.length > 0 && (
-                            <div className="mt-6 grid grid-cols-2 gap-3">
-                                {filledNetworks
-                                    .slice(0, 2)
-                                    .map((network, index) => (
-                                        <ActionNetworkButton
-                                            key={`${network.uuid}-action-${index}`}
-                                            name={network.name}
-                                            icon={network.icon_url}
-                                            value={network.value}
-                                            color={
-                                                index === 0
-                                                    ? primaryColor
-                                                    : secondaryColor
-                                            }
+                                            document={document}
+                                            index={index}
+                                            color={primaryColor}
                                         />
                                     ))}
-                            </div>
+                                </div>
+                            </section>
                         )}
 
-                        <div className="mt-5 space-y-3">
+                        <div className="mt-4 grid grid-cols-1 gap-3">
                             <button
                                 type="button"
-                                className="flex w-full items-center justify-center rounded-2xl px-4 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0"
+                                className="flex w-full items-center justify-center gap-2 rounded-[22px] px-4 py-3.5 text-sm font-black text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0"
                                 style={{
                                     background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-                                    boxShadow: `0 14px 30px ${primaryColor}35`,
+                                    boxShadow: `0 16px 35px ${primaryColor}35`,
                                 }}
                             >
                                 Guardar contacto
+                                <ChevronRight size={17} />
                             </button>
 
                             <button
                                 type="button"
-                                className="flex w-full items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-gray-950 px-4 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-black hover:shadow-xl active:translate-y-0 dark:border-white/[0.08] dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100"
+                                className="flex w-full items-center justify-center gap-3 rounded-[22px] border border-gray-200 bg-white px-4 py-3.5 text-sm font-black text-gray-950 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 dark:border-white/10 dark:bg-white/[0.06] dark:text-white"
                             >
-                                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white text-gray-950 dark:bg-gray-950 dark:text-white">
-                                    <WalletCards size={15} />
-                                </span>
-
+                                <WalletCards size={17} />
                                 Agregar a Google Wallet
                             </button>
                         </div>
@@ -342,72 +320,153 @@ export default function ModernTemplate({
     );
 }
 
-function SectionTitle({
-    icon,
-    title,
-    children,
+function SocialConstellation({
+    networks,
+    primaryColor,
+    secondaryColor,
 }: {
-    icon: ReactNode;
-    title: string;
-    children: ReactNode;
+    networks: Array<{
+        uuid?: string;
+        name?: string;
+        value?: string;
+        icon_url?: string | null;
+    }>;
+    primaryColor: string;
+    secondaryColor: string;
 }) {
     return (
-        <div className="mt-5">
-            <h4 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-gray-400">
-                {icon}
-                {title}
-            </h4>
+        <div className="mt-4">
+            <div className="relative overflow-hidden rounded-[26px] border border-gray-100 bg-gray-50/80 px-3 py-3 dark:border-white/10 dark:bg-white/[0.04]">
+                <div
+                    className="pointer-events-none absolute -left-10 top-1/2 h-20 w-20 -translate-y-1/2 rounded-full opacity-10 blur-2xl"
+                    style={{ backgroundColor: primaryColor }}
+                />
 
-            {children}
+                <div
+                    className="pointer-events-none absolute -right-10 top-1/2 h-20 w-20 -translate-y-1/2 rounded-full opacity-10 blur-2xl"
+                    style={{ backgroundColor: secondaryColor }}
+                />
+
+                <div className="relative flex flex-wrap items-center justify-center gap-2.5">
+                    {networks.map((network, index) => (
+                        <button
+                            key={`network-${network.uuid || network.name || index}`}
+                            type="button"
+                            disabled={!network.value}
+                            title={network.name || "Red social"}
+                            className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-gray-200/70 transition-all hover:-translate-y-1 hover:rotate-[-3deg] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:ring-white/10"
+                        >
+                            <span
+                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-50 transition-transform group-hover:scale-105 dark:bg-gray-100"
+                                style={{
+                                    boxShadow: `inset 0 0 0 1px ${
+                                        index % 2 === 0
+                                            ? `${primaryColor}22`
+                                            : `${secondaryColor}22`
+                                    }`,
+                                }}
+                            >
+                                <NetworkIcon
+                                    icon={network.icon_url}
+                                    name={network.name}
+                                    color={
+                                        index % 2 === 0
+                                            ? primaryColor
+                                            : secondaryColor
+                                    }
+                                />
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 }
 
-function QuickNetworkAction({
-    name,
+function SectionHeader({
     icon,
-    value,
-    color,
+    title,
 }: {
-    name?: string;
-    icon?: string | null;
-    value?: string;
-    color: string;
+    icon: ReactNode;
+    title: string;
 }) {
     return (
-        <button
-            type="button"
-            disabled={!value}
-            className="flex min-w-0 items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-40"
-            style={{ backgroundColor: color }}
-        >
-            <NetworkIcon icon={icon} name={name} compact />
-            <span className="min-w-0 truncate">{name || "Red"}</span>
-        </button>
+        <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-gray-100 text-gray-600 dark:bg-white/[0.08] dark:text-gray-300">
+                {icon}
+            </span>
+
+            <h4 className="text-xs font-black uppercase tracking-[0.16em] text-gray-400">
+                {title}
+            </h4>
+        </div>
     );
 }
 
-function InfoItem({
+function MiniInfo({
     icon,
     label,
     value,
+    color,
 }: {
     icon: ReactNode;
     label: string;
     value?: string;
+    color: string;
 }) {
     if (!value) return null;
 
     return (
-        <div className="flex items-center gap-3 rounded-3xl border border-gray-100 bg-gray-50 px-3 py-3 shadow-sm dark:border-white/[0.06] dark:bg-white/[0.04]">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-gray-500 shadow-sm dark:bg-gray-900 dark:text-gray-300">
-                {icon}
+        <div className="min-w-0 max-w-full rounded-[20px] bg-gray-100 px-3 py-3 text-center dark:bg-white/[0.06]">
+            <div className="mb-1 flex items-center justify-center gap-1.5">
+                <span style={{ color }}>{icon}</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                    {label}
+                </span>
             </div>
 
-            <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-gray-400">{label}</p>
+            <p className="max-w-[135px] truncate text-xs font-black text-gray-700 dark:text-gray-200">
+                {value}
+            </p>
+        </div>
+    );
+}
 
-                <p className="truncate text-sm font-bold text-gray-700 dark:text-gray-200">
+function InfoRow({
+    icon,
+    label,
+    value,
+    color,
+    centered = false,
+}: {
+    icon: ReactNode;
+    label: string;
+    value?: string;
+    color: string;
+    centered?: boolean;
+}) {
+    if (!value) return null;
+
+    return (
+        <div
+            className={`flex items-center gap-3 rounded-[24px] border border-white bg-white p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.05] ${
+                centered ? "justify-center text-center" : ""
+            }`}
+        >
+            <span
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] text-white"
+                style={{ backgroundColor: color }}
+            >
+                {icon}
+            </span>
+
+            <div className={centered ? "min-w-0" : "min-w-0 flex-1"}>
+                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-gray-400">
+                    {label}
+                </p>
+
+                <p className="break-words text-sm font-black text-gray-800 dark:text-white">
                     {value}
                 </p>
             </div>
@@ -415,93 +474,99 @@ function InfoItem({
     );
 }
 
-function NetworkItem({
-    name,
-    icon,
-    value,
-}: {
-    name?: string;
-    icon?: string | null;
-    value?: string;
-}) {
-    if (!name && !value) return null;
-
-    return (
-        <div className="group flex items-center gap-3 rounded-3xl border border-gray-100 bg-gray-50 px-3 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-md dark:border-white/[0.06] dark:bg-white/[0.04] dark:hover:bg-white/[0.07]">
-            <NetworkIcon icon={icon} name={name} />
-
-            <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium text-gray-400">
-                    {name || "Red social"}
-                </p>
-
-                {value && (
-                    <p className="truncate text-sm font-bold text-gray-700 dark:text-gray-200">
-                        {value}
-                    </p>
-                )}
-            </div>
-        </div>
-    );
-}
-
-function ActionNetworkButton({
-    name,
-    icon,
-    value,
+function DocumentRow({
+    document,
+    index,
     color,
 }: {
-    name?: string;
-    icon?: string | null;
-    value?: string;
+    document: DocumentLike;
+    index: number;
     color: string;
 }) {
+    if (!document) return null;
+
+    const documentName = getDocumentName(document, index);
+
     return (
-        <button
-            type="button"
-            disabled={!value}
-            className="flex min-w-0 items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-3 py-3 text-sm font-bold text-gray-700 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-gray-200"
-        >
-            <span style={{ color }}>
-                <NetworkIcon icon={icon} name={name} compact />
+        <div className="group flex items-center gap-3 rounded-[22px] bg-gray-50 p-3 transition-all hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-md dark:bg-white/[0.06] dark:hover:bg-white/[0.09]">
+            <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white"
+                style={{ backgroundColor: color }}
+            >
+                <FileText size={16} />
             </span>
 
-            <span className="min-w-0 truncate">{name || "Red"}</span>
-        </button>
+            <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-black text-gray-800 dark:text-white">
+                    {documentName}
+                </p>
+            </div>
+
+            <ChevronRight
+                size={16}
+                className="shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5"
+            />
+        </div>
     );
 }
 
 function NetworkIcon({
     icon,
     name,
-    compact = false,
+    color,
 }: {
     icon?: string | null;
     name?: string;
-    compact?: boolean;
+    color: string;
 }) {
-    const sizeClass = compact ? "h-5 w-5" : "h-10 w-10";
-    const imageSizeClass = compact ? "h-4 w-4" : "h-5 w-5";
-
     if (!icon) {
-        return (
-            <span
-                className={`flex ${sizeClass} shrink-0 items-center justify-center rounded-2xl bg-white text-gray-500 shadow-sm dark:bg-gray-900 dark:text-gray-300`}
-            >
-                <Link2 size={compact ? 15 : 17} />
-            </span>
-        );
+        return <Link2 size={16} style={{ color }} />;
     }
 
     return (
-        <span
-            className={`flex ${sizeClass} shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-gray-900`}
-        >
-            <img
-                src={icon}
-                alt={name || "Red social"}
-                className={`${imageSizeClass} object-contain`}
-            />
-        </span>
+        <img
+            src={icon}
+            alt={name || "Red social"}
+            className="h-[20px] w-[20px] object-contain"
+        />
     );
+}
+
+function getDocumentName(document: DocumentLike, index: number) {
+    if (document instanceof File) {
+        return document.name;
+    }
+
+    if (typeof document === "string") {
+        return getNameFromPath(document) || `Documento ${index + 1}`;
+    }
+
+    if (document && typeof document === "object") {
+        return (
+            document.name ||
+            document.file_name ||
+            document.filename ||
+            document.original_name ||
+            document.originalName ||
+            document.title ||
+            getNameFromPath(document.url) ||
+            getNameFromPath(document.path) ||
+            `Documento ${index + 1}`
+        );
+    }
+
+    return `Documento ${index + 1}`;
+}
+
+function getNameFromPath(path?: string) {
+    if (!path) return "";
+
+    try {
+        const cleanPath = path.split("?")[0];
+        const name = cleanPath.split("/").pop();
+
+        return name ? decodeURIComponent(name) : "";
+    } catch {
+        return "";
+    }
 }

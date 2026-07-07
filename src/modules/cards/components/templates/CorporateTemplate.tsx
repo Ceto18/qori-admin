@@ -185,26 +185,7 @@ export default function CorporateTemplate({
                             )}
                         </div>
 
-                        {filledNetworks.length > 0 && (
-                            <div className="mt-5 grid grid-cols-2 gap-3">
-                                {filledNetworks
-                                    .slice(0, 2)
-                                    .map((network, index) => (
-                                        <QuickNetworkAction
-                                            key={`${network.uuid}-${index}`}
-                                            name={network.name}
-                                            icon={network.icon_url}
-                                            value={network.value}
-                                            color={
-                                                index === 0
-                                                    ? primaryColor
-                                                    : secondaryColor
-                                            }
-                                        />
-                                    ))}
-                            </div>
-                        )}
-
+                    
                         <div className="mt-5 space-y-3">
                             <InfoItem
                                 icon={<MapPin size={17} />}
