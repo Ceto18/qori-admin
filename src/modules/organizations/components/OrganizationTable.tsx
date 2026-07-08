@@ -73,7 +73,7 @@ export default function OrganizationTable({
       onView={onView}
       onEdit={onEdit}
       onDelete={onDelete}
-      showView={false}
+      showView={showView}
       showEdit={showEdit}
       showDelete={showDelete}
     />

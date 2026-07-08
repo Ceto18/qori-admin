@@ -84,7 +84,7 @@ function OrganizationsPageContent() {
   };
 
   const handleView = (organization: Organization) => {
-    router.push(`/organizations/${organization.uuid}`);
+    router.push(`/organizations/${organization.uuid}/cards`);
   };
 
   const handleEdit = (organization: Organization) => {
