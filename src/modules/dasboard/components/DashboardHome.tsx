@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import DashboardHero from "./DashboardHero";
 import MembershipStatusCard from "./MembershipStatusCard";
@@ -8,11 +8,18 @@ import AvailableCardsSection from "./AvailableCardsSection";
 
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCardStore } from "@/modules/cards/store/useCardStore";
+import { organizationService } from "@/modules/organizations/services/organizationService";
+import type { Organization } from "@/modules/organizations/types";
+import { handleApiError } from "@/shared/utils/handleApiError";
 
 export default function DashboardHome() {
   const user = useAuthStore((state) => state.user);
 
   const { cards, loading, fetchCards, clearCards } = useCardStore();
+
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [organizationUuid, setOrganizationUuid] = useState("");
+  const [loadingOrganizations, setLoadingOrganizations] = useState(false);
 
   const hasActiveMembership =
     user?.role === "admin" || user?.role === "superadmin";
@@ -20,15 +27,45 @@ export default function DashboardHome() {
   const canViewCards =
     user?.role === "admin" || user?.role === "superadmin";
 
-  /**
-   * IMPORTANTE:
-   * Aquí necesitas el UUID real de la organización.
-   *
-   * Por ahora lo dejo quemado para probar.
-   * Luego debe venir desde tu organizationStore,
-   * una organización seleccionada, o el usuario logueado.
-   */
-  const organizationUuid = "d2e78b0f-3d8a-47d7-a4c3-170b7ced1c86";
+  useEffect(() => {
+    const loadOrganizations = async () => {
+      if (!canViewCards) {
+        setOrganizations([]);
+        setOrganizationUuid("");
+        clearCards();
+        return;
+      }
+
+      try {
+        setLoadingOrganizations(true);
+
+        const response = await organizationService.getOrganizations({
+          page: 1,
+          per_page: 100,
+        });
+
+        const organizationsData: Organization[] =
+          response.data?.data ?? response.data ?? [];
+
+        setOrganizations(organizationsData);
+
+        if (organizationsData.length > 0) {
+          setOrganizationUuid((currentUuid) => {
+            if (currentUuid) return currentUuid;
+
+            return organizationsData[0].uuid;
+          });
+        }
+      } catch (error) {
+        console.error("Error al cargar organizaciones:", error);
+        handleApiError(error);
+      } finally {
+        setLoadingOrganizations(false);
+      }
+    };
+
+    loadOrganizations();
+  }, [canViewCards, clearCards]);
 
   useEffect(() => {
     if (!canViewCards) {
@@ -36,13 +73,21 @@ export default function DashboardHome() {
       return;
     }
 
-    if (!organizationUuid) return;
+    if (!organizationUuid) {
+      clearCards();
+      return;
+    }
 
     fetchCards(organizationUuid, {
       page: 1,
       perPage: 5,
+      search: "",
     });
   }, [canViewCards, organizationUuid, fetchCards, clearCards]);
+
+  const handleOrganizationChange = (newOrganizationUuid: string) => {
+    setOrganizationUuid(newOrganizationUuid);
+  };
 
   return (
     <div className="space-y-6">
@@ -66,6 +111,12 @@ export default function DashboardHome() {
             Para crear y administrar tarjetas necesitas una membresía activa.
           </p>
         </div>
+      ) : loadingOrganizations ? (
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Cargando organizaciones...
+          </p>
+        </div>
       ) : loading ? (
         <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -75,8 +126,11 @@ export default function DashboardHome() {
       ) : (
         <AvailableCardsSection
           cards={cards}
+          organizations={organizations}
           organizationUuid={organizationUuid}
           hasActiveMembership={hasActiveMembership}
+          loadingOrganizations={loadingOrganizations}
+          onOrganizationChange={handleOrganizationChange}
         />
       )}
     </div>

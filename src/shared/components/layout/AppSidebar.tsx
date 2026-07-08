@@ -55,12 +55,6 @@ const navItems: NavItem[] = [
     roles: ["admin"],
   },
   {
-    icon: <WalletIcon />,
-    name: "Tarjetas de presentación",
-    path: "/cards",
-    roles: ["admin"],
-  },
-  {
     icon: <CreditCardIcon />,
     name: "Planes",
     path: "/plans",

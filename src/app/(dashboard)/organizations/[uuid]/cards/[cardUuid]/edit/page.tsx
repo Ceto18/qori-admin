@@ -1,21 +1,14 @@
-// src/app/(admin)/cards/[uuid]/edit/page.tsx
+// src/app/(dashboard)/organizations/[uuid]/cards/[cardUuid]/edit/page.tsx
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Alert, Spin } from "antd";
 
 import CardForm from "@/modules/cards/components/CardForm";
 import { useCardStore } from "@/modules/cards/store/useCardStore";
 import { CardFormValues } from "@/modules/cards/types";
-import { organizationService } from "@/modules/organizations/services/organizationService";
-import { handleApiError } from "@/shared/utils/handleApiError";
-
-type Organization = {
-  uuid: string;
-  name?: string;
-};
 
 function CardEditInitialLoading() {
   return (
@@ -91,9 +84,14 @@ function CardEditWarningMessage({ message }: { message: string }) {
 
 export default function EditCardPage() {
   const router = useRouter();
-  const params = useParams();
 
-  const uuid = String(params.uuid ?? "");
+  const params = useParams<{
+    uuid: string;
+    cardUuid: string;
+  }>();
+
+  const organizationUuid = params.uuid;
+  const cardUuid = params.cardUuid;
 
   const {
     selectedCard,
@@ -104,46 +102,15 @@ export default function EditCardPage() {
     clearSelectedCard,
   } = useCardStore();
 
-  const [organizationUuid, setOrganizationUuid] = useState("");
-  const [loadingOrganization, setLoadingOrganization] = useState(true);
-
   useEffect(() => {
-    const loadOrganizationAndCard = async () => {
-      try {
-        setLoadingOrganization(true);
+    if (!organizationUuid || !cardUuid) return;
 
-        const response = await organizationService.getOrganizations({
-          page: 1,
-          per_page: 1,
-        });
-
-        const organization: Organization | null =
-          response.data?.data?.[0] ??
-          response.data?.[0] ??
-          response.data ??
-          null;
-
-        if (!organization?.uuid) return;
-
-        setOrganizationUuid(organization.uuid);
-
-        if (uuid) {
-          await fetchCard(organization.uuid, uuid);
-        }
-      } catch (error) {
-        console.error("Error al cargar organización o tarjeta:", error);
-        handleApiError(error);
-      } finally {
-        setLoadingOrganization(false);
-      }
-    };
-
-    loadOrganizationAndCard();
+    fetchCard(organizationUuid, cardUuid);
 
     return () => {
       clearSelectedCard();
     };
-  }, [uuid, fetchCard, clearSelectedCard]);
+  }, [organizationUuid, cardUuid, fetchCard, clearSelectedCard]);
 
   const handleSubmit = async (values: CardFormValues) => {
     try {
@@ -151,25 +118,31 @@ export default function EditCardPage() {
         throw new Error("No se encontró el UUID de la organización.");
       }
 
-      if (!uuid) {
+      if (!cardUuid) {
         throw new Error("No se encontró el UUID de la tarjeta.");
       }
 
-      await updateCard(organizationUuid, uuid, values);
+      await updateCard(organizationUuid, cardUuid, values);
 
-      router.push("/cards");
+      router.push(`/organizations/${organizationUuid}/cards`);
     } catch (error) {
       console.error("Error al actualizar tarjeta:", error);
     }
   };
 
-  if (loadingOrganization || (loading && !selectedCard)) {
+  if (loading && !selectedCard) {
     return <CardEditInitialLoading />;
   }
 
   if (!organizationUuid) {
     return (
-      <CardEditErrorMessage message="No se encontró una organización disponible para editar la tarjeta." />
+      <CardEditErrorMessage message="No se encontró el UUID de la organización para editar la tarjeta." />
+    );
+  }
+
+  if (!cardUuid) {
+    return (
+      <CardEditErrorMessage message="No se encontró el UUID de la tarjeta." />
     );
   }
 
@@ -182,6 +155,14 @@ export default function EditCardPage() {
   return (
     <div className="space-y-6">
       <div>
+        <button
+          type="button"
+          onClick={() => router.push(`/organizations/${organizationUuid}/cards`)}
+          className="mb-4 text-sm font-medium text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
+        >
+          ← Volver a tarjetas
+        </button>
+
         <h1 className="text-xl font-semibold text-gray-800 dark:text-white/90">
           Editar tarjeta
         </h1>

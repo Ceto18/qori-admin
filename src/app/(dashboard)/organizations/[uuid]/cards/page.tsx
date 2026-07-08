@@ -1,9 +1,9 @@
-// src/app/(admin)/cards/page.tsx
+// src/app/(admin)/organizations/[uuid]/cards/page.tsx
 
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Alert, Modal, Spin, message } from "antd";
 
 import RoleGuard from "@/modules/auth/RoleGuard";
@@ -14,15 +14,8 @@ import ConfirmModal from "@/shared/components/ui/modal/ConfirmModal";
 import CardTable from "@/modules/cards/components/CardTable";
 import { useCardStore } from "@/modules/cards/store/useCardStore";
 import { Card } from "@/modules/cards/types";
-import { organizationService } from "@/modules/organizations/services/organizationService";
 import { cardService } from "@/modules/cards/services/cardService";
 import { handleApiError } from "@/shared/utils/handleApiError";
-
-type Organization = {
-  uuid: string;
-  name?: string;
-  slug?: string;
-};
 
 function TableAntLoading() {
   return (
@@ -63,6 +56,12 @@ function CardsPageErrorMessage({ message }: { message: string }) {
 function CardsPageContent() {
   const router = useRouter();
 
+  const params = useParams<{
+    uuid: string;
+  }>();
+
+  const organizationUuid = params.uuid;
+
   const {
     cards,
     currentPage,
@@ -74,9 +73,6 @@ function CardsPageContent() {
   } = useCardStore();
 
   const [search, setSearch] = useState("");
-  const [organizationUuid, setOrganizationUuid] = useState("");
-  const [organizationSlug, setOrganizationSlug] = useState("");
-  const [organizationLoaded, setOrganizationLoaded] = useState(false);
   const [cardToDelete, setCardToDelete] = useState<Card | null>(null);
 
   const [qrModalOpen, setQrModalOpen] = useState(false);
@@ -84,41 +80,14 @@ function CardsPageContent() {
   const [selectedQrUrl, setSelectedQrUrl] = useState("");
 
   useEffect(() => {
-    const loadOrganization = async () => {
-      try {
-        setOrganizationLoaded(false);
+    if (!organizationUuid) return;
 
-        const response = await organizationService.getOrganizations({
-          page: 1,
-          per_page: 1,
-        });
-
-        const organization: Organization | null =
-          response.data?.data?.[0] ??
-          response.data?.[0] ??
-          response.data ??
-          null;
-
-        if (!organization?.uuid) return;
-
-        setOrganizationUuid(organization.uuid);
-        setOrganizationSlug(organization.slug ?? "");
-
-        await fetchCards(organization.uuid, {
-          page: 1,
-          perPage,
-          search: "",
-        });
-      } catch (error) {
-        console.error("Error al cargar organización:", error);
-        handleApiError(error);
-      } finally {
-        setOrganizationLoaded(true);
-      }
-    };
-
-    loadOrganization();
-  }, [fetchCards, perPage]);
+    fetchCards(organizationUuid, {
+      page: 1,
+      perPage,
+      search: "",
+    });
+  }, [organizationUuid, fetchCards, perPage]);
 
   const handleOpenUrl = async (card: Card) => {
     if (!organizationUuid) {
@@ -127,10 +96,7 @@ function CardsPageContent() {
     }
 
     try {
-      const response = await cardService.getCardUrl(
-        organizationUuid,
-        card.uuid
-      );
+      const response = await cardService.getCardUrl(organizationUuid, card.uuid);
 
       const publicUrl = response.data;
 
@@ -153,10 +119,7 @@ function CardsPageContent() {
     }
 
     try {
-      const qrBlob = await cardService.getCardQr(
-        organizationUuid,
-        card.uuid
-      );
+      const qrBlob = await cardService.getCardQr(organizationUuid, card.uuid);
 
       const qrImageUrl = URL.createObjectURL(qrBlob);
 
@@ -255,11 +218,11 @@ function CardsPageContent() {
   };
 
   const handleView = (card: Card) => {
-    router.push(`/cards/${card.uuid}`);
+    router.push(`/organizations/${organizationUuid}/cards/${card.uuid}`);
   };
 
   const handleEdit = (card: Card) => {
-    router.push(`/cards/${card.uuid}/edit`);
+    router.push(`/organizations/${organizationUuid}/cards/${card.uuid}/edit`);
   };
 
   const handleDelete = (card: Card) => {
@@ -296,9 +259,9 @@ function CardsPageContent() {
       selectedQrCard?.last_name ?? ""
     }`.trim();
 
-  if (organizationLoaded && !organizationUuid) {
+  if (!organizationUuid) {
     return (
-      <CardsPageErrorMessage message="No se encontró una organización disponible para listar las tarjetas." />
+      <CardsPageErrorMessage message="No se encontró el UUID de la organización para listar las tarjetas." />
     );
   }
 
@@ -306,17 +269,25 @@ function CardsPageContent() {
     <div className="space-y-6">
       <TableToolbar
         title="Tarjetas"
-        description="Administra las tarjetas de presentación digitales."
+        description="Administra las tarjetas de presentación digitales de esta organización."
         addLabel="Nueva tarjeta"
-        onAdd={() => router.push("/cards/create")}
+        onAdd={() => router.push(`/organizations/${organizationUuid}/cards/create`)}
         searchValue={search}
         searchPlaceholder="Buscar tarjeta..."
         onSearchChange={handleSearchChange}
         onSearchSubmit={handleSearchSubmit}
       />
 
+      <button
+        type="button"
+        onClick={() => router.push("/organizations")}
+        className="text-sm font-medium text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
+      >
+        ← Volver a organizaciones
+      </button>
+
       <div className="relative">
-        {(!organizationLoaded || loading) && <TableAntLoading />}
+        {loading && <TableAntLoading />}
 
         <CardTable
           data={cards}
@@ -442,28 +413,6 @@ function CardsPageContent() {
               "
             >
               Descargar QR
-            </button>
-
-            <button
-              type="button"
-              onClick={handleOpenQrImage}
-              disabled={!selectedQrUrl}
-              className="
-                w-full
-                rounded-lg
-                bg-brand-500
-                px-4
-                py-2
-                text-sm
-                font-medium
-                text-white
-                transition
-                hover:bg-brand-600
-                disabled:cursor-not-allowed
-                disabled:opacity-50
-              "
-            >
-              Abrir QR
             </button>
           </div>
         </div>
