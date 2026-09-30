@@ -9,7 +9,7 @@ import type {
     SubscriptionSubscribeResponse,
 } from "../types";
 
-function generateIdempotencyKey() {
+function generateIdempotencyKey(): string {
     if (
         typeof window !== "undefined" &&
         window.crypto &&
@@ -24,17 +24,21 @@ function generateIdempotencyKey() {
 }
 
 export const subscriptionService = {
-    preview: async (payload: SubscriptionPreviewPayload) => {
-        const response = await api.post<SubscriptionPreviewResponse>(
+    preview: async (
+        payload: SubscriptionPreviewPayload
+    ): Promise<SubscriptionPreviewResponse> => {
+        const { data } = await api.post<SubscriptionPreviewResponse>(
             "/subscriptions/preview",
             payload
         );
 
-        return response.data;
+        return data;
     },
 
-    checkout: async (payload: SubscriptionCheckoutPayload) => {
-        const response = await api.post<SubscriptionCheckoutResponse>(
+    checkout: async (
+        payload: SubscriptionCheckoutPayload
+    ): Promise<SubscriptionCheckoutResponse> => {
+        const { data } = await api.post<SubscriptionCheckoutResponse>(
             "/subscriptions/checkout",
             payload,
             {
@@ -44,11 +48,13 @@ export const subscriptionService = {
             }
         );
 
-        return response.data;
+        return data;
     },
 
-    subscribe: async (payload: SubscriptionSubscribePayload) => {
-        const response = await api.post<SubscriptionSubscribeResponse>(
+    subscribe: async (
+        payload: SubscriptionSubscribePayload
+    ): Promise<SubscriptionSubscribeResponse> => {
+        const { data } = await api.post<SubscriptionSubscribeResponse>(
             "/subscriptions/subscribe",
             payload,
             {
@@ -58,6 +64,6 @@ export const subscriptionService = {
             }
         );
 
-        return response.data;
+        return data;
     },
 };

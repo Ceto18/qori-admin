@@ -68,8 +68,8 @@ export const useSubscriptionStore = create<SubscriptionStore>((set) => ({
 
             set({
                 preview: null,
-                loadingPreview: false,
                 previewError: message,
+                loadingPreview: false,
             });
 
             return null;
@@ -82,6 +82,7 @@ export const useSubscriptionStore = create<SubscriptionStore>((set) => ({
                 loadingCheckout: true,
                 checkoutError: null,
                 checkoutData: null,
+                subscribeData: null,
             });
 
             const response = await subscriptionService.checkout(payload);
@@ -98,8 +99,9 @@ export const useSubscriptionStore = create<SubscriptionStore>((set) => ({
                 "No se pudo crear el checkout.";
 
             set({
-                loadingCheckout: false,
+                checkoutData: null,
                 checkoutError: message,
+                loadingCheckout: false,
             });
 
             return null;
@@ -114,15 +116,7 @@ export const useSubscriptionStore = create<SubscriptionStore>((set) => ({
                 subscribeData: null,
             });
 
-            console.log("SUBSCRIBE PAYLOAD:", payload);
-
-            const response =
-                await subscriptionService.subscribe(payload);
-
-            console.log(
-                "SUBSCRIBE RESPONSE:",
-                response
-            );
+            const response = await subscriptionService.subscribe(payload);
 
             set({
                 subscribeData: response,
@@ -131,48 +125,32 @@ export const useSubscriptionStore = create<SubscriptionStore>((set) => ({
 
             return response;
         } catch (error: any) {
-            console.error(
-                "SUBSCRIBE ERROR STATUS:",
-                error?.response?.status
-            );
-
-            console.error(
-                "SUBSCRIBE ERROR DATA:",
-                error?.response?.data
-            );
-
-            console.error(
-                "SUBSCRIBE ERROR:",
-                error
-            );
-
             const message =
                 error?.response?.data?.message ||
                 "No se pudo procesar la suscripción.";
 
             set({
-                loadingCheckout: false,
+                subscribeData: null,
                 checkoutError: message,
+                loadingCheckout: false,
             });
 
             throw error;
         }
     },
 
-    clearPreview: () => {
+    clearPreview: () =>
         set({
             preview: null,
             previewError: null,
             loadingPreview: false,
-        });
-    },
+        }),
 
-    clearCheckout: () => {
+    clearCheckout: () =>
         set({
             checkoutData: null,
             subscribeData: null,
             checkoutError: null,
             loadingCheckout: false,
-        });
-    },
+        }),
 }));

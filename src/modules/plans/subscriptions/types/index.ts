@@ -31,24 +31,22 @@ export type SubscriptionPreviewResponse = {
 export type SubscriptionCheckoutPayload = {
     plan_uuid: string;
     discount_code?: string | null;
+    customer_email: string;
 };
 
 export type SubscriptionCheckout = {
-    subscription: {
-        id?: number;
+    subscriptionIntent: {
         uuid: string;
         status?: string;
-        amount?: number;
-        plan_name?: string;
     };
-    payment: {
-        uuid: string;
-        status?: string;
+    pricing: {
+        original: number;
+        discount: number;
+        amount: number;
         amount_cents: number;
         currency: string;
-        order_id?: string | null;
     };
-    order_id?: string | null;
+    expires_at?: string | null;
 };
 
 export type SubscriptionCheckoutResponse = {

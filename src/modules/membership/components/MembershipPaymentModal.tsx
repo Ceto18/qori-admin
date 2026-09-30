@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { PublicPlan } from "@/modules/public-plans/types";
 import { useSubscriptionStore } from "@/modules/plans/subscriptions/store/useSubscriptionStore";
+import { useAuthStore } from "@/store/useAuthStore";
 
 type Props = {
     open: boolean;
@@ -12,9 +13,7 @@ type Props = {
 };
 
 type CulqiCheckoutInstance = {
-    token?: {
-        id: string;
-    };
+    token?: { id: string };
     order?: unknown;
     error?: {
         user_message?: string;
@@ -66,12 +65,33 @@ function CloseIcon() {
     );
 }
 
+function SuccessIcon() {
+    return (
+        <svg
+            className="h-8 w-8"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+        >
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m5 12 4 4L19 6"
+            />
+        </svg>
+    );
+}
+
 export default function MembershipPaymentModal({
     open,
     plan,
     onClose,
 }: Props) {
     const [discountCode, setDiscountCode] = useState("");
+    const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+    const { user } = useAuthStore();
 
     const {
         preview,
@@ -89,6 +109,7 @@ export default function MembershipPaymentModal({
     useEffect(() => {
         if (!open) {
             setDiscountCode("");
+            setPaymentSuccess(false);
             clearPreview();
             clearCheckout();
         }
@@ -127,13 +148,32 @@ export default function MembershipPaymentModal({
         clearPreview();
     };
 
+    const handleSuccessClose = () => {
+        setPaymentSuccess(false);
+        setDiscountCode("");
+        clearPreview();
+        clearCheckout();
+        onClose();
+    };
+
     const handlePayNow = async () => {
         if (!plan?.uuid) {
-            console.error("El plan seleccionado no tiene uuid:", plan);
+            console.error(
+                "El plan seleccionado no tiene uuid:",
+                plan
+            );
             return;
         }
 
-        const publicKey = process.env.NEXT_PUBLIC_CULQI_PUBLIC_KEY;
+        if (!user?.email) {
+            console.error(
+                "No se encontró el correo del usuario autenticado."
+            );
+            return;
+        }
+
+        const publicKey =
+            process.env.NEXT_PUBLIC_CULQI_PUBLIC_KEY;
 
         if (!publicKey) {
             console.error(
@@ -154,34 +194,50 @@ export default function MembershipPaymentModal({
 
             const checkoutResponse = await checkout({
                 plan_uuid: plan.uuid,
-                discount_code: appliedDiscount?.code ?? null,
+                discount_code:
+                    appliedDiscount?.code ?? null,
+                customer_email: user.email,
             });
 
-            if (!checkoutResponse?.data?.subscription?.uuid) {
+            if (!checkoutResponse) {
+                throw new Error(
+                    "No se pudo crear el checkout."
+                );
+            }
+
+            const subscription =
+                checkoutResponse.data.subscriptionIntent;
+
+            const pricing =
+                checkoutResponse.data.pricing;
+
+            if (!subscription?.uuid) {
                 throw new Error(
                     "El checkout no devolvió el UUID de la suscripción."
                 );
             }
 
-            if (!checkoutResponse.data.payment) {
+            if (!pricing) {
                 throw new Error(
-                    "El checkout no devolvió la información del pago."
+                    "El checkout no devolvió la información del precio."
                 );
             }
 
-            const subscription =
-                checkoutResponse.data.subscription;
+            const amountInCents =
+                Number(pricing.amount_cents);
 
-            const payment =
-                checkoutResponse.data.payment;
-
-            const amountInCents = Number(
-                payment.amount_cents
-            );
-
-            if (!amountInCents || amountInCents <= 0) {
+            if (
+                !Number.isInteger(amountInCents) ||
+                amountInCents <= 0
+            ) {
                 throw new Error(
                     "El monto de la suscripción no es válido."
+                );
+            }
+
+            if (!pricing.currency) {
+                throw new Error(
+                    "El checkout no devolvió una moneda válida."
                 );
             }
 
@@ -189,67 +245,68 @@ export default function MembershipPaymentModal({
                 window.CulqiCheckout;
 
             const culqiCheckout =
-                new CulqiCheckout(
-                    publicKey,
-                    {
-                        settings: {
-                            title:
-                                `Suscripción - ${subscription.plan_name ||
-                                plan.name
-                                }`,
-                            currency:
-                                payment.currency || "PEN",
-                            amount:
-                                amountInCents,
-                            order:
-                                payment.order_id ||
-                                "",
+                new CulqiCheckout(publicKey, {
+                    settings: {
+                        title:
+                            `Suscripción - ${plan.name}`,
+                        currency:
+                            pricing.currency,
+                        amount:
+                            amountInCents,
+                    },
+
+                    client: {
+                        email: user.email,
+                    },
+
+                    options: {
+                        lang: "es",
+                        installments: false,
+                        modal: true,
+                        container:
+                            "#culqi-container",
+
+                        paymentMethods: {
+                            tarjeta: true,
+                            yape: false,
+                            billetera: false,
+                            bancaMovil: false,
+                            agente: false,
+                            cuotealo: false,
                         },
-                        options: {
-                            lang: "es",
-                            installments: false,
-                            modal: true,
-                            container:
-                                "#culqi-container",
-                            paymentMethods: {
-                                tarjeta: true,
-                                yape: false,
-                                billetera: false,
-                                bancaMovil: false,
-                                agente: false,
-                                cuotealo: false,
-                            },
-                            paymentMethodsSort: [
-                                "tarjeta",
-                            ],
+
+                        paymentMethodsSort: [
+                            "tarjeta",
+                        ],
+                    },
+
+                    appearance: {
+                        theme: "default",
+                        hiddenCulqiLogo: false,
+                        hiddenBannerContent: false,
+                        hiddenBanner: false,
+                        hiddenToolBarAmount: false,
+                        menuType: "sidebar",
+                        buttonCardPayText:
+                            "Pagar suscripción",
+                        logo: "",
+
+                        defaultStyle: {
+                            bannerColor:
+                                "#0A2540",
+                            buttonBackground:
+                                "#0A2540",
+                            menuColor:
+                                "#0A2540",
+                            linksColor:
+                                "#0A2540",
+                            buttonTextColor:
+                                "#FFFFFF",
+                            priceColor:
+                                "#0A2540",
                         },
-                        appearance: {
-                            theme: "default",
-                            hiddenCulqiLogo: false,
-                            hiddenBannerContent: false,
-                            hiddenBanner: false,
-                            hiddenToolBarAmount: false,
-                            menuType: "sidebar",
-                            buttonCardPayText:
-                                "Pagar suscripción",
-                            logo: "",
-                            defaultStyle: {
-                                bannerColor:
-                                    "#0A2540",
-                                buttonBackground:
-                                    "#0A2540",
-                                menuColor:
-                                    "#0A2540",
-                                linksColor:
-                                    "#0A2540",
-                                buttonTextColor:
-                                    "#FFFFFF",
-                                priceColor:
-                                    "#0A2540",
-                            },
-                        },
-                    }
-                );
+                    },
+                });
 
             culqiCheckout.culqi =
                 async () => {
@@ -258,11 +315,6 @@ export default function MembershipPaymentModal({
                             culqiCheckout.token.id;
 
                         culqiCheckout.close();
-
-                        console.log(
-                            "Token generado:",
-                            tokenId
-                        );
 
                         try {
                             const response =
@@ -279,16 +331,10 @@ export default function MembershipPaymentModal({
                                 );
                             }
 
-                            console.log(
-                                "Suscripción procesada correctamente:",
-                                response
-                            );
-
                             clearPreview();
                             clearCheckout();
-                            setDiscountCode("");
-                            onClose();
-                        } catch (error: any) {
+                            setPaymentSuccess(true);
+                        } catch (error) {
                             console.error(
                                 "Error subscribe:",
                                 error
@@ -319,12 +365,8 @@ export default function MembershipPaymentModal({
                     clearCheckout();
                 };
 
-            console.log(
-                "Checkout creado. Abriendo Culqi..."
-            );
-
             culqiCheckout.open();
-        } catch (error: any) {
+        } catch (error) {
             console.error(
                 "Error creando checkout:",
                 error
@@ -333,6 +375,69 @@ export default function MembershipPaymentModal({
     };
 
     if (!open || !plan) return null;
+
+    if (paymentSuccess) {
+        return (
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" />
+
+                <div className="relative z-10 w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-500/10 dark:text-green-400">
+                        <SuccessIcon />
+                    </div>
+
+                    <h2 className="mt-5 text-xl font-semibold text-gray-800 dark:text-white/90">
+                        Suscripción activada
+                    </h2>
+
+                    <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
+                        Tu pago fue procesado correctamente y tu
+                        membresía se activó exitosamente.
+                    </p>
+
+                    <div className="mt-5 rounded-xl bg-gray-50 p-4 text-left dark:bg-gray-950/40">
+                        <div className="flex items-center justify-between gap-4">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                                Plan
+                            </span>
+
+                            <span className="text-sm font-semibold text-gray-800 dark:text-white/90">
+                                {plan.name}
+                            </span>
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between gap-4">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                                Monto
+                            </span>
+
+                            <span className="text-sm font-semibold text-gray-800 dark:text-white/90">
+                                {formatPrice(total)}
+                            </span>
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between gap-4">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                                Estado
+                            </span>
+
+                            <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-500/10 dark:text-green-400">
+                                Activa
+                            </span>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={handleSuccessClose}
+                        className="mt-6 w-full rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600"
+                    >
+                        Continuar
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
@@ -387,7 +492,9 @@ export default function MembershipPaymentModal({
                             </div>
 
                             <p className="shrink-0 text-lg font-bold text-gray-800 dark:text-white/90">
-                                {formatPrice(plan.price)}
+                                {formatPrice(
+                                    plan.price
+                                )}
                             </p>
                         </div>
 
@@ -398,7 +505,10 @@ export default function MembershipPaymentModal({
                                 </p>
 
                                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">
-                                    {plan.limits.max_organizations}
+                                    {
+                                        plan.limits
+                                            .max_organizations
+                                    }
                                 </p>
                             </div>
 
@@ -408,7 +518,10 @@ export default function MembershipPaymentModal({
                                 </p>
 
                                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">
-                                    {plan.limits.max_cards}
+                                    {
+                                        plan.limits
+                                            .max_cards
+                                    }
                                 </p>
                             </div>
                         </div>
@@ -426,18 +539,22 @@ export default function MembershipPaymentModal({
                                                 a.sort_order -
                                                 b.sort_order
                                         )
-                                        .map((feature) => (
-                                            <li
-                                                key={`${feature.description}-${feature.sort_order}`}
-                                                className="flex gap-2 text-sm text-gray-500 dark:text-gray-400"
-                                            >
-                                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
+                                        .map(
+                                            (feature) => (
+                                                <li
+                                                    key={`${feature.description}-${feature.sort_order}`}
+                                                    className="flex gap-2 text-sm text-gray-500 dark:text-gray-400"
+                                                >
+                                                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
 
-                                                <span>
-                                                    {feature.description}
-                                                </span>
-                                            </li>
-                                        ))}
+                                                    <span>
+                                                        {
+                                                            feature.description
+                                                        }
+                                                    </span>
+                                                </li>
+                                            )
+                                        )}
                                 </ul>
                             </div>
                         )}
@@ -472,8 +589,12 @@ export default function MembershipPaymentModal({
                             {appliedDiscount ? (
                                 <button
                                     type="button"
-                                    onClick={handleRemoveDiscount}
-                                    disabled={loadingCheckout}
+                                    onClick={
+                                        handleRemoveDiscount
+                                    }
+                                    disabled={
+                                        loadingCheckout
+                                    }
                                     className="inline-flex h-11 items-center justify-center rounded-lg border border-gray-300 px-5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                                 >
                                     Quitar
@@ -481,7 +602,9 @@ export default function MembershipPaymentModal({
                             ) : (
                                 <button
                                     type="button"
-                                    onClick={handleApplyDiscount}
+                                    onClick={
+                                        handleApplyDiscount
+                                    }
                                     disabled={
                                         loadingPreview ||
                                         loadingCheckout
@@ -511,6 +634,7 @@ export default function MembershipPaymentModal({
                             <p className="mt-2 text-sm text-green-600 dark:text-green-400">
                                 Código aplicado:{" "}
                                 {appliedDiscount.code}
+
                                 {appliedDiscount.type ===
                                     "percentage"
                                     ? ` - ${appliedDiscount.value}% de descuento`
@@ -528,7 +652,9 @@ export default function MembershipPaymentModal({
                             </span>
 
                             <span className="font-medium text-gray-800 dark:text-white/90">
-                                {formatPrice(originalPrice)}
+                                {formatPrice(
+                                    originalPrice
+                                )}
                             </span>
                         </div>
 
@@ -538,7 +664,10 @@ export default function MembershipPaymentModal({
                             </span>
 
                             <span className="font-medium text-green-600 dark:text-green-400">
-                                - {formatPrice(discountAmount)}
+                                -{" "}
+                                {formatPrice(
+                                    discountAmount
+                                )}
                             </span>
                         </div>
 
