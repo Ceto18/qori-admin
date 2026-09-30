@@ -31,21 +31,54 @@ export type SubscriptionPreviewResponse = {
 export type SubscriptionCheckoutPayload = {
     plan_uuid: string;
     discount_code?: string | null;
-    culqi_token: string;
 };
 
 export type SubscriptionCheckout = {
-    subscription_id?: number;
-    subscription_uuid?: string;
-    charge_id?: string;
-    status?: string;
-    original_price?: number;
-    discount_amount?: number;
-    final_price?: number;
+    subscription: {
+        id?: number;
+        uuid: string;
+        status?: string;
+        amount?: number;
+        plan_name?: string;
+    };
+    payment: {
+        uuid: string;
+        status?: string;
+        amount_cents: number;
+        currency: string;
+        order_id?: string | null;
+    };
+    order_id?: string | null;
 };
 
 export type SubscriptionCheckoutResponse = {
     success: boolean;
     message: string;
     data: SubscriptionCheckout;
+};
+
+export type SubscriptionSubscribePayload = {
+    subscription_uuid: string;
+    token_id: string;
+};
+
+export type SubscriptionSubscribe = {
+    subscription?: {
+        id?: number;
+        uuid?: string;
+        status?: string;
+    };
+    payment?: {
+        uuid?: string;
+        status?: string;
+        amount_cents?: number;
+        currency?: string;
+        charge_id?: string | null;
+    };
+};
+
+export type SubscriptionSubscribeResponse = {
+    success: boolean;
+    message: string;
+    data: SubscriptionSubscribe;
 };

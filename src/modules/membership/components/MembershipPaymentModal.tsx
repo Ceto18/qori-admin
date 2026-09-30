@@ -11,6 +11,32 @@ type Props = {
     onClose: () => void;
 };
 
+type CulqiCheckoutInstance = {
+    token?: {
+        id: string;
+    };
+    order?: unknown;
+    error?: {
+        user_message?: string;
+        merchant_message?: string;
+        [key: string]: unknown;
+    };
+    open: () => void;
+    close: () => void;
+    culqi?: () => void | Promise<void>;
+};
+
+type CulqiCheckoutConstructor = new (
+    publicKey: string,
+    config: Record<string, unknown>
+) => CulqiCheckoutInstance;
+
+declare global {
+    interface Window {
+        CulqiCheckout?: CulqiCheckoutConstructor;
+    }
+}
+
 function formatPrice(price: string | number) {
     const value = Number(price);
 
@@ -40,7 +66,11 @@ function CloseIcon() {
     );
 }
 
-export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
+export default function MembershipPaymentModal({
+    open,
+    plan,
+    onClose,
+}: Props) {
     const [discountCode, setDiscountCode] = useState("");
 
     const {
@@ -49,14 +79,20 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
         previewError,
         fetchPreview,
         clearPreview,
+        checkout,
+        subscribe,
+        loadingCheckout,
+        checkoutError,
+        clearCheckout,
     } = useSubscriptionStore();
 
     useEffect(() => {
         if (!open) {
             setDiscountCode("");
             clearPreview();
+            clearCheckout();
         }
-    }, [open, clearPreview]);
+    }, [open, clearPreview, clearCheckout]);
 
     const planPrice = useMemo(() => {
         if (!plan) return 0;
@@ -72,25 +108,16 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
     const appliedDiscount = preview?.discount_code ?? null;
 
     const handleApplyDiscount = async () => {
-        if (!plan) return;
-
-        const planUuid = plan.uuid;
-
-        if (!planUuid) {
-            console.error("El plan seleccionado no tiene uuid:", plan);
-            return;
-        }
+        if (!plan?.uuid) return;
 
         const normalizedCode = discountCode.trim().toUpperCase();
 
         clearPreview();
 
-        if (!normalizedCode) {
-            return;
-        }
+        if (!normalizedCode) return;
 
         await fetchPreview({
-            plan_uuid: planUuid,
+            plan_uuid: plan.uuid,
             discount_code: normalizedCode,
         });
     };
@@ -100,81 +127,209 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
         clearPreview();
     };
 
-    const handlePayNow = () => {
-        if (!plan) return;
-
-        if (!plan.uuid) {
+    const handlePayNow = async () => {
+        if (!plan?.uuid) {
             console.error("El plan seleccionado no tiene uuid:", plan);
-            return;
-        }
-
-        if (!window.Culqi) {
-            console.error("Culqi todavía no está cargado.");
             return;
         }
 
         const publicKey = process.env.NEXT_PUBLIC_CULQI_PUBLIC_KEY;
 
         if (!publicKey) {
-            console.error("Falta configurar NEXT_PUBLIC_CULQI_PUBLIC_KEY.");
+            console.error(
+                "Falta configurar NEXT_PUBLIC_CULQI_PUBLIC_KEY."
+            );
             return;
         }
 
-        const amountInCents = Math.round(total * 100);
+        if (!window.CulqiCheckout) {
+            console.error(
+                "CulqiCheckout todavía no está cargado."
+            );
+            return;
+        }
 
-        window.Culqi.publicKey = publicKey;
+        try {
+            clearCheckout();
 
-        window.Culqi.settings({
-            title: "Qori ID",
-            currency: "PEN",
-            amount: amountInCents,
-            description: plan.name,
-        });
+            const checkoutResponse = await checkout({
+                plan_uuid: plan.uuid,
+                discount_code: appliedDiscount?.code ?? null,
+            });
 
-        window.Culqi.options?.({
-            lang: "es",
-            installments: false,
-            paymentMethods: {
-                tarjeta: true,
-                yape: false,
-                bancaMovil: false,
-                agente: false,
-                billetera: false,
-                cuotealo: false,
-            },
-        });
-
-        window.culqi = async () => {
-            if (window.Culqi?.token) {
-                const tokenId = window.Culqi.token.id;
-
-                console.log("TOKEN CULQI:", tokenId);
-
-                console.log("Enviar al backend:", {
-                    plan_uuid: plan.uuid,
-                    discount_code: appliedDiscount?.code ?? null,
-                    culqi_token: tokenId,
-                });
-
-                /*
-                    Luego esto lo cambiarás por tu store:
-
-                    await checkoutSubscription({
-                        plan_uuid: plan.uuid,
-                        discount_code: appliedDiscount?.code ?? null,
-                        culqi_token: tokenId,
-                    });
-                */
-
-                return;
+            if (!checkoutResponse?.data?.subscription?.uuid) {
+                throw new Error(
+                    "El checkout no devolvió el UUID de la suscripción."
+                );
             }
 
-            if (window.Culqi?.error) {
-                console.error("Error Culqi:", window.Culqi.error);
+            if (!checkoutResponse.data.payment) {
+                throw new Error(
+                    "El checkout no devolvió la información del pago."
+                );
             }
-        };
 
-        window.Culqi.open();
+            const subscription =
+                checkoutResponse.data.subscription;
+
+            const payment =
+                checkoutResponse.data.payment;
+
+            const amountInCents = Number(
+                payment.amount_cents
+            );
+
+            if (!amountInCents || amountInCents <= 0) {
+                throw new Error(
+                    "El monto de la suscripción no es válido."
+                );
+            }
+
+            const CulqiCheckout =
+                window.CulqiCheckout;
+
+            const culqiCheckout =
+                new CulqiCheckout(
+                    publicKey,
+                    {
+                        settings: {
+                            title:
+                                `Suscripción - ${subscription.plan_name ||
+                                plan.name
+                                }`,
+                            currency:
+                                payment.currency || "PEN",
+                            amount:
+                                amountInCents,
+                            order:
+                                payment.order_id ||
+                                "",
+                        },
+                        options: {
+                            lang: "es",
+                            installments: false,
+                            modal: true,
+                            container:
+                                "#culqi-container",
+                            paymentMethods: {
+                                tarjeta: true,
+                                yape: false,
+                                billetera: false,
+                                bancaMovil: false,
+                                agente: false,
+                                cuotealo: false,
+                            },
+                            paymentMethodsSort: [
+                                "tarjeta",
+                            ],
+                        },
+                        appearance: {
+                            theme: "default",
+                            hiddenCulqiLogo: false,
+                            hiddenBannerContent: false,
+                            hiddenBanner: false,
+                            hiddenToolBarAmount: false,
+                            menuType: "sidebar",
+                            buttonCardPayText:
+                                "Pagar suscripción",
+                            logo: "",
+                            defaultStyle: {
+                                bannerColor:
+                                    "#0A2540",
+                                buttonBackground:
+                                    "#0A2540",
+                                menuColor:
+                                    "#0A2540",
+                                linksColor:
+                                    "#0A2540",
+                                buttonTextColor:
+                                    "#FFFFFF",
+                                priceColor:
+                                    "#0A2540",
+                            },
+                        },
+                    }
+                );
+
+            culqiCheckout.culqi =
+                async () => {
+                    if (culqiCheckout.token) {
+                        const tokenId =
+                            culqiCheckout.token.id;
+
+                        culqiCheckout.close();
+
+                        console.log(
+                            "Token generado:",
+                            tokenId
+                        );
+
+                        try {
+                            const response =
+                                await subscribe({
+                                    subscription_uuid:
+                                        subscription.uuid,
+                                    token_id:
+                                        tokenId,
+                                });
+
+                            if (!response) {
+                                throw new Error(
+                                    "No se pudo procesar la suscripción."
+                                );
+                            }
+
+                            console.log(
+                                "Suscripción procesada correctamente:",
+                                response
+                            );
+
+                            clearPreview();
+                            clearCheckout();
+                            setDiscountCode("");
+                            onClose();
+                        } catch (error: any) {
+                            console.error(
+                                "Error subscribe:",
+                                error
+                            );
+                        }
+
+                        return;
+                    }
+
+                    if (culqiCheckout.order) {
+                        culqiCheckout.close();
+
+                        console.log(
+                            "Order Culqi:",
+                            culqiCheckout.order
+                        );
+
+                        clearCheckout();
+
+                        return;
+                    }
+
+                    console.error(
+                        "Error Culqi:",
+                        culqiCheckout.error
+                    );
+
+                    clearCheckout();
+                };
+
+            console.log(
+                "Checkout creado. Abriendo Culqi..."
+            );
+
+            culqiCheckout.open();
+        } catch (error: any) {
+            console.error(
+                "Error creando checkout:",
+                error
+            );
+        }
     };
 
     if (!open || !plan) return null;
@@ -205,7 +360,8 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                        disabled={loadingCheckout}
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-60 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                     >
                         <CloseIcon />
                     </button>
@@ -267,7 +423,8 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                                     {[...plan.features]
                                         .sort(
                                             (a, b) =>
-                                                a.sort_order - b.sort_order
+                                                a.sort_order -
+                                                b.sort_order
                                         )
                                         .map((feature) => (
                                             <li
@@ -304,7 +461,11 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                                     }
                                 }}
                                 placeholder="Ej: ABCD123"
-                                disabled={!!appliedDiscount || loadingPreview}
+                                disabled={
+                                    !!appliedDiscount ||
+                                    loadingPreview ||
+                                    loadingCheckout
+                                }
                                 className="h-11 flex-1 rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 disabled:bg-gray-50 disabled:text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-brand-500"
                             />
 
@@ -312,7 +473,8 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                                 <button
                                     type="button"
                                     onClick={handleRemoveDiscount}
-                                    className="inline-flex h-11 items-center justify-center rounded-lg border border-gray-300 px-5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                                    disabled={loadingCheckout}
+                                    className="inline-flex h-11 items-center justify-center rounded-lg border border-gray-300 px-5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                                 >
                                     Quitar
                                 </button>
@@ -320,7 +482,10 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                                 <button
                                     type="button"
                                     onClick={handleApplyDiscount}
-                                    disabled={loadingPreview}
+                                    disabled={
+                                        loadingPreview ||
+                                        loadingCheckout
+                                    }
                                     className="inline-flex h-11 items-center justify-center rounded-lg border border-gray-300 px-5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                                 >
                                     {loadingPreview
@@ -336,14 +501,22 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                             </p>
                         )}
 
+                        {checkoutError && (
+                            <p className="mt-2 text-sm text-red-500">
+                                {checkoutError}
+                            </p>
+                        )}
+
                         {appliedDiscount && (
                             <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                                Código aplicado: {appliedDiscount.code}
-                                {appliedDiscount.type === "percentage"
+                                Código aplicado:{" "}
+                                {appliedDiscount.code}
+                                {appliedDiscount.type ===
+                                    "percentage"
                                     ? ` - ${appliedDiscount.value}% de descuento`
                                     : ` - ${formatPrice(
-                                          appliedDiscount.value
-                                      )} de descuento`}
+                                        appliedDiscount.value
+                                    )} de descuento`}
                             </p>
                         )}
                     </div>
@@ -387,7 +560,8 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                     <button
                         type="button"
                         onClick={onClose}
-                        className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                        disabled={loadingCheckout}
+                        className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                     >
                         Cancelar
                     </button>
@@ -395,12 +569,20 @@ export default function MembershipPaymentModal({ open, plan, onClose }: Props) {
                     <button
                         type="button"
                         onClick={handlePayNow}
-                        className="inline-flex items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600"
+                        disabled={
+                            loadingCheckout ||
+                            loadingPreview
+                        }
+                        className="inline-flex items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        Pagar ahora
+                        {loadingCheckout
+                            ? "Procesando..."
+                            : "Pagar ahora"}
                     </button>
                 </div>
             </div>
+
+            <div id="culqi-container" />
         </div>
     );
 }

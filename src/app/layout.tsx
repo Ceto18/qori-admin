@@ -51,7 +51,7 @@ export default function RootLayout({
                 </ThemeProvider>
 
                 <Script
-                    src="https://checkout.culqi.com/js/v4"
+                    src="https://js.culqi.com/checkout-js"
                     strategy="afterInteractive"
                 />
             </body>
