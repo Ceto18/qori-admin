@@ -7,6 +7,8 @@ import type {
     SubscriptionCheckoutResponse,
     SubscriptionSubscribePayload,
     SubscriptionSubscribeResponse,
+    SubscriptionCancelResponse,
+    CurrentPlanResponse,
 } from "../types";
 
 function generateIdempotencyKey(): string {
@@ -62,6 +64,28 @@ export const subscriptionService = {
                     "Idempotency-Key": generateIdempotencyKey(),
                 },
             }
+        );
+
+        return data;
+    },
+
+    cancel: async (): Promise<SubscriptionCancelResponse> => {
+        const { data } = await api.post<SubscriptionCancelResponse>(
+            "/subscriptions/cancel",
+            {},
+            {
+                headers: {
+                    "Idempotency-Key": generateIdempotencyKey(),
+                },
+            }
+        );
+
+        return data;
+    },
+
+    currentPlan: async (): Promise<CurrentPlanResponse> => {
+        const { data } = await api.get<CurrentPlanResponse>(
+            "/auth/current-plan"
         );
 
         return data;

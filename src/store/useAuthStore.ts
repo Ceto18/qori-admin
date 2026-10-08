@@ -28,6 +28,8 @@ interface AuthState {
     expiresIn?: number | null;
   }) => void;
 
+  setUser: (user: AuthUser) => void;
+
   logout: () => void;
   setHasHydrated: (value: boolean) => void;
 
@@ -60,6 +62,10 @@ export const useAuthStore = create<AuthState>()(
           refreshToken,
           expiresIn,
         });
+      },
+
+      setUser: (user) => {
+        set({ user });
       },
 
       logout: () => {

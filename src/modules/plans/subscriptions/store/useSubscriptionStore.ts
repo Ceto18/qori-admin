@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 import { subscriptionService } from "../services/subscriptionService";
+
 import type {
     SubscriptionPreview,
     SubscriptionPreviewPayload,
@@ -8,6 +9,8 @@ import type {
     SubscriptionCheckoutResponse,
     SubscriptionSubscribePayload,
     SubscriptionSubscribeResponse,
+    SubscriptionCancelResponse,
+    CurrentPlan,
 } from "../types";
 
 type SubscriptionStore = {
@@ -19,6 +22,14 @@ type SubscriptionStore = {
     checkoutError: string | null;
     checkoutData: SubscriptionCheckoutResponse | null;
     subscribeData: SubscriptionSubscribeResponse | null;
+
+    loadingCancel: boolean;
+    cancelError: string | null;
+    cancelData: SubscriptionCancelResponse | null;
+
+    currentPlan: CurrentPlan | null;
+    loadingCurrentPlan: boolean;
+    currentPlanError: string | null;
 
     fetchPreview: (
         payload: SubscriptionPreviewPayload
@@ -32,8 +43,15 @@ type SubscriptionStore = {
         payload: SubscriptionSubscribePayload
     ) => Promise<SubscriptionSubscribeResponse | null>;
 
+    cancelSubscription: () =>
+        Promise<SubscriptionCancelResponse | null>;
+
+    fetchCurrentPlan: () => Promise<CurrentPlan | null>;
+
     clearPreview: () => void;
     clearCheckout: () => void;
+    clearCancel: () => void;
+    clearCurrentPlan: () => void;
 };
 
 export const useSubscriptionStore = create<SubscriptionStore>((set) => ({
@@ -46,6 +64,14 @@ export const useSubscriptionStore = create<SubscriptionStore>((set) => ({
     checkoutData: null,
     subscribeData: null,
 
+    loadingCancel: false,
+    cancelError: null,
+    cancelData: null,
+
+    currentPlan: null,
+    loadingCurrentPlan: false,
+    currentPlanError: null,
+
     fetchPreview: async (payload) => {
         try {
             set({
@@ -53,7 +79,8 @@ export const useSubscriptionStore = create<SubscriptionStore>((set) => ({
                 previewError: null,
             });
 
-            const response = await subscriptionService.preview(payload);
+            const response =
+                await subscriptionService.preview(payload);
 
             set({
                 preview: response.data,
@@ -85,7 +112,8 @@ export const useSubscriptionStore = create<SubscriptionStore>((set) => ({
                 subscribeData: null,
             });
 
-            const response = await subscriptionService.checkout(payload);
+            const response =
+                await subscriptionService.checkout(payload);
 
             set({
                 checkoutData: response,
@@ -116,7 +144,8 @@ export const useSubscriptionStore = create<SubscriptionStore>((set) => ({
                 subscribeData: null,
             });
 
-            const response = await subscriptionService.subscribe(payload);
+            const response =
+                await subscriptionService.subscribe(payload);
 
             set({
                 subscribeData: response,
@@ -139,6 +168,69 @@ export const useSubscriptionStore = create<SubscriptionStore>((set) => ({
         }
     },
 
+    cancelSubscription: async () => {
+        try {
+            set({
+                loadingCancel: true,
+                cancelError: null,
+                cancelData: null,
+            });
+
+            const response =
+                await subscriptionService.cancel();
+
+            set({
+                cancelData: response,
+                loadingCancel: false,
+            });
+
+            return response;
+        } catch (error: any) {
+            const message =
+                error?.response?.data?.message ||
+                "No se pudo cancelar la suscripción.";
+
+            set({
+                cancelData: null,
+                cancelError: message,
+                loadingCancel: false,
+            });
+
+            return null;
+        }
+    },
+
+    fetchCurrentPlan: async () => {
+        try {
+            set({
+                loadingCurrentPlan: true,
+                currentPlanError: null,
+            });
+
+            const response =
+                await subscriptionService.currentPlan();
+
+            set({
+                currentPlan: response.data,
+                loadingCurrentPlan: false,
+            });
+
+            return response.data;
+        } catch (error: any) {
+            const message =
+                error?.response?.data?.message ||
+                "No se pudo obtener el plan actual.";
+
+            set({
+                currentPlan: null,
+                currentPlanError: message,
+                loadingCurrentPlan: false,
+            });
+
+            return null;
+        }
+    },
+
     clearPreview: () =>
         set({
             preview: null,
@@ -152,5 +244,19 @@ export const useSubscriptionStore = create<SubscriptionStore>((set) => ({
             subscribeData: null,
             checkoutError: null,
             loadingCheckout: false,
+        }),
+
+    clearCancel: () =>
+        set({
+            cancelData: null,
+            cancelError: null,
+            loadingCancel: false,
+        }),
+
+    clearCurrentPlan: () =>
+        set({
+            currentPlan: null,
+            currentPlanError: null,
+            loadingCurrentPlan: false,
         }),
 }));

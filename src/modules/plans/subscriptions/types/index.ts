@@ -80,3 +80,49 @@ export type SubscriptionSubscribeResponse = {
     message: string;
     data: SubscriptionSubscribe;
 };
+
+export type SubscriptionCancel = {
+    subscription?: {
+        uuid?: string;
+        status?: string;
+    };
+};
+
+export type SubscriptionCancelResponse = {
+    success: boolean;
+    message: string;
+    data: SubscriptionCancel | null;
+};
+
+export type CurrentPlanSubscription = {
+    status: string;
+    plan: {
+        uuid: string;
+        name: string;
+        description: string;
+    };
+    billing: {
+        amount: string;
+        currency: string;
+    };
+    period: {
+        starts_at: string;
+        ends_at: string;
+        days_remaining: number;
+    };
+    payment_method: {
+        brand: string | null;
+        last_four: string | null;
+    };
+};
+
+export type CurrentPlan = {
+    has_subscription: boolean;
+    subscription: CurrentPlanSubscription | null;
+};
+
+export type CurrentPlanResponse = {
+    success: boolean;
+    message: string;
+    data: CurrentPlan;
+};
