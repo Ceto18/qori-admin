@@ -47,6 +47,17 @@ export default function DiscountCodeTable({
             ),
         },
         {
+            key: "user_id",
+            header: "Afiliado",
+            render: (discountCode) => (
+                <span className="text-gray-500 dark:text-gray-400">
+                    {discountCode.user_id
+                        ? `ID ${discountCode.user_id}`
+                        : "Sin afiliado"}
+                </span>
+            ),
+        },
+        {
             key: "type",
             header: "Tipo",
             render: (discountCode) => (
@@ -60,7 +71,10 @@ export default function DiscountCodeTable({
             header: "Valor",
             render: (discountCode) => (
                 <span className="font-medium text-gray-700 dark:text-gray-300">
-                    {formatDiscountValue(discountCode.type, discountCode.value)}
+                    {formatDiscountValue(
+                        discountCode.type,
+                        discountCode.value
+                    )}
                 </span>
             ),
         },
@@ -97,8 +111,17 @@ export default function DiscountCodeTable({
             key: "active",
             header: "Estado",
             render: (discountCode) => (
-                <Badge size="sm" color={discountCode.active ? "success" : "error"}>
-                    {discountCode.active ? "Activo" : "Inactivo"}
+                <Badge
+                    size="sm"
+                    color={
+                        discountCode.active
+                            ? "success"
+                            : "error"
+                    }
+                >
+                    {discountCode.active
+                        ? "Activo"
+                        : "Inactivo"}
                 </Badge>
             ),
         },
@@ -110,7 +133,9 @@ export default function DiscountCodeTable({
             columns={columns}
             loading={loading}
             emptyMessage="No hay códigos de descuento registrados."
-            getRowKey={(discountCode) => discountCode.uuid}
+            getRowKey={(discountCode) =>
+                discountCode.uuid
+            }
             onView={onView}
             onEdit={onEdit}
             onDelete={onDelete}
@@ -121,8 +146,13 @@ export default function DiscountCodeTable({
     );
 }
 
-function getTypeLabel(type: string) {
-    const labels: Record<string, string> = {
+function getTypeLabel(
+    type: string
+) {
+    const labels: Record<
+        string,
+        string
+    > = {
         percentage: "Porcentaje",
         fixed: "Monto fijo",
     };
@@ -130,24 +160,43 @@ function getTypeLabel(type: string) {
     return labels[type] ?? type;
 }
 
-function formatDiscountValue(type: string, value: string | number) {
-    const numberValue = Number(value);
+function formatDiscountValue(
+    type: string,
+    value: string | number
+) {
+    const numberValue =
+        Number(value);
 
-    if (Number.isNaN(numberValue)) return value;
-
-    if (type === "percentage") {
-        return `${numberValue.toFixed(2)}%`;
+    if (
+        Number.isNaN(numberValue)
+    ) {
+        return value;
     }
 
-    return `S/ ${numberValue.toFixed(2)}`;
+    if (
+        type === "percentage"
+    ) {
+        return `${numberValue.toFixed(
+            2
+        )}%`;
+    }
+
+    return `S/ ${numberValue.toFixed(
+        2
+    )}`;
 }
 
-function formatDate(value: string | null) {
+function formatDate(
+    value: string | null
+) {
     if (!value) return "Sin fecha";
 
-    return new Intl.DateTimeFormat("es-PE", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-    }).format(new Date(value));
+    return new Intl.DateTimeFormat(
+        "es-PE",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        }
+    ).format(new Date(value));
 }

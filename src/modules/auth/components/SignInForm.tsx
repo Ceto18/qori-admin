@@ -1,40 +1,64 @@
 "use client";
 
+import React, { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 import Input from "@/shared/components/form/input/InputField";
 import Label from "@/shared/components/form/Label";
 import Button from "@/shared/components/ui/button/Button";
-import { EyeCloseIcon, EyeIcon } from "@/shared/icons";
-import Link from "next/link";
-import React, { useState } from "react";
 
-import { useRouter } from "next/navigation";
+import {
+    EyeCloseIcon,
+    EyeIcon,
+} from "@/shared/icons";
+
 import { useAuthStore } from "@/store/useAuthStore";
+
 import { loginRequest } from "../services/authService";
+
 import { showSuccess } from "@/shared/utils/toast";
 import { handleApiError } from "@/shared/utils/handleApiError";
+
+import { getHomePathByRole } from "@/modules/auth/utils/getHomePathByRole";
 
 export default function SignInForm() {
     const router = useRouter();
 
-    const setAuth = useAuthStore((state) => state.setAuth);
+    const setAuth = useAuthStore(
+        (state) => state.setAuth
+    );
 
-    const [showPassword, setShowPassword] = useState(false);
+    const [
+        showPassword,
+        setShowPassword,
+    ] = useState(false);
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [email, setEmail] =
+        useState("");
 
-    const [loading, setLoading] = useState(false);
+    const [password, setPassword] =
+        useState("");
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const [loading, setLoading] =
+        useState(false);
+
+    const handleLogin = async (
+        e: React.FormEvent
+    ) => {
         e.preventDefault();
 
         if (loading) return;
 
-        if (!email.trim() || !password.trim()) {
+        if (
+            !email.trim() ||
+            !password.trim()
+        ) {
             handleApiError({
                 response: {
                     data: {
-                        message: "Ingresa tu correo y contraseña.",
+                        message:
+                            "Ingresa tu correo y contraseña.",
                     },
                 },
             });
@@ -45,28 +69,46 @@ export default function SignInForm() {
         setLoading(true);
 
         try {
-            const response = await loginRequest({
-                email,
-                password,
-            });
+            const response =
+                await loginRequest({
+                    email,
+                    password,
+                });
 
-            const user = response?.user;
-            const token = response?.token;
+            const user =
+                response?.user;
+
+            const token =
+                response?.token;
 
             if (!token || !user) {
-                throw new Error("Respuesta inválida del backend");
+                throw new Error(
+                    "Respuesta inválida del backend"
+                );
             }
 
             setAuth({
                 user,
                 token,
-                refreshToken: response.refreshToken,
-                expiresIn: response.expiresIn,
+                refreshToken:
+                    response.refreshToken,
+                expiresIn:
+                    response.expiresIn,
             });
 
-            showSuccess("Inicio de sesión correcto.");
+            showSuccess(
+                response.message ??
+                "Inicio de sesión correcto."
+            );
 
-            router.replace("/");
+            const homePath =
+                getHomePathByRole(
+                    user.role
+                );
+
+            router.replace(
+                homePath
+            );
         } catch (error) {
             handleApiError(error);
         } finally {
@@ -93,37 +135,54 @@ export default function SignInForm() {
                             <div>
                                 <Label>
                                     Correo electrónico{" "}
-                                    <span className="text-error-500">*</span>
+                                    <span className="text-error-500">
+                                        *
+                                    </span>
                                 </Label>
 
                                 <Input
                                     placeholder="ejemplo@correo.com"
                                     type="email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(e) =>
+                                        setEmail(
+                                            e.target.value
+                                        )
+                                    }
                                 />
                             </div>
 
                             <div>
                                 <Label>
                                     Contraseña{" "}
-                                    <span className="text-error-500">*</span>
+                                    <span className="text-error-500">
+                                        *
+                                    </span>
                                 </Label>
 
                                 <div className="relative">
                                     <Input
-                                        type={showPassword ? "text" : "password"}
+                                        type={
+                                            showPassword
+                                                ? "text"
+                                                : "password"
+                                        }
                                         placeholder="Ingresa tu contraseña"
                                         value={password}
                                         onChange={(e) =>
-                                            setPassword(e.target.value)
+                                            setPassword(
+                                                e.target.value
+                                            )
                                         }
                                     />
 
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            setShowPassword((prev) => !prev)
+                                            setShowPassword(
+                                                (prev) =>
+                                                    !prev
+                                            )
                                         }
                                         className="absolute right-4 top-1/2 z-30 -translate-y-1/2 cursor-pointer"
                                     >
@@ -154,7 +213,9 @@ export default function SignInForm() {
                                     type="submit"
                                     disabled={loading}
                                 >
-                                    {loading ? "Ingresando..." : "Ingresar"}
+                                    {loading
+                                        ? "Ingresando..."
+                                        : "Ingresar"}
                                 </Button>
                             </div>
                         </div>
@@ -163,6 +224,7 @@ export default function SignInForm() {
                     <div className="mt-5">
                         <p className="text-center text-sm text-gray-700 dark:text-gray-400 sm:text-start">
                             ¿No tienes una cuenta?{" "}
+
                             <Link
                                 href="/signup"
                                 className="text-brand-500 hover:text-brand-600 dark:text-brand-400"

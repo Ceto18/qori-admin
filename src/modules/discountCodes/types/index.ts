@@ -11,6 +11,7 @@ export interface DiscountCode {
   active: boolean;
   starts_at: string | null;
   expires_at: string | null;
+  user_id: number | null;
 }
 
 export interface DiscountCodePayload {
@@ -21,6 +22,8 @@ export interface DiscountCodePayload {
   max_uses: number | null;
   starts_at: string | null;
   expires_at: string | null;
+  user_id: number | null;
+  active: boolean;
 }
 
 export interface DiscountCodeFormValues {
@@ -31,4 +34,6 @@ export interface DiscountCodeFormValues {
   max_uses: string;
   starts_at: string;
   expires_at: string;
+  user_id: string;
+  active: boolean;
 }

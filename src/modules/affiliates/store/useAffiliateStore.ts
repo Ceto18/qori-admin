@@ -1,70 +1,85 @@
 import { create } from "zustand";
 
-import { discountCodeService } from "../services/discountCodeService";
-import {
-  DiscountCode,
-  DiscountCodePayload,
+import { affiliateService } from "../services/affiliateService";
+
+import type {
+  Affiliate,
+  AffiliateOption,
+  AffiliatePayload,
+  UpdateAffiliatePayload,
 } from "../types";
 
 import { showSuccess } from "@/shared/utils/toast";
 import { handleApiError } from "@/shared/utils/handleApiError";
 
-type FetchDiscountCodesParams = {
+type FetchAffiliatesParams = {
   page?: number;
   perPage?: number;
   search?: string;
 };
 
-interface DiscountCodeState {
-  discountCodes: DiscountCode[];
-  discountCode: DiscountCode | null;
+type FetchAffiliateOptionsParams = {
+  page?: number;
+  perPage?: number;
+  search?: string;
+};
+
+interface AffiliateState {
+  affiliates: Affiliate[];
+  affiliate: Affiliate | null;
+  affiliateOptions: AffiliateOption[];
 
   loading: boolean;
+  loadingOptions: boolean;
 
   currentPage: number;
   totalPages: number;
   perPage: number;
   total: number;
 
-  fetchDiscountCodes: (
-    params?: FetchDiscountCodesParams
+  fetchAffiliates: (
+    params?: FetchAffiliatesParams
   ) => Promise<void>;
 
-  fetchDiscountCode: (
+  fetchAffiliate: (
     uuid: string
   ) => Promise<void>;
 
-  createDiscountCode: (
-    payload: DiscountCodePayload
+  fetchAffiliateOptions: (
+    params?: FetchAffiliateOptionsParams
   ) => Promise<void>;
 
-  updateDiscountCode: (
+  createAffiliate: (
+    payload: AffiliatePayload
+  ) => Promise<boolean>;
+
+  updateAffiliate: (
     uuid: string,
-    payload: DiscountCodePayload
-  ) => Promise<void>;
+    payload: UpdateAffiliatePayload
+  ) => Promise<boolean>;
 
-  deleteDiscountCode: (
+  deleteAffiliate: (
     uuid: string
-  ) => Promise<void>;
+  ) => Promise<boolean>;
 
-  clearDiscountCode: () => void;
+  clearAffiliate: () => void;
 }
 
-export const useDiscountCodeStore =
-  create<DiscountCodeState>((set, get) => ({
-    discountCodes: [],
-    discountCode: null,
+export const useAffiliateStore =
+  create<AffiliateState>((set, get) => ({
+    affiliates: [],
+    affiliate: null,
+    affiliateOptions: [],
 
     loading: false,
+    loadingOptions: false,
 
     currentPage: 1,
     totalPages: 1,
     perPage: 10,
     total: 0,
 
-    fetchDiscountCodes: async (
-      params = {}
-    ) => {
+    fetchAffiliates: async (params = {}) => {
       try {
         set({ loading: true });
 
@@ -75,14 +90,14 @@ export const useDiscountCodeStore =
         } = params;
 
         const response =
-          await discountCodeService.getDiscountCodes({
+          await affiliateService.getAffiliates({
             page,
             per_page: perPage,
             search,
           });
 
         set({
-          discountCodes:
+          affiliates:
             response.data?.data ?? [],
           currentPage:
             response.data?.current_page ?? 1,
@@ -96,7 +111,7 @@ export const useDiscountCodeStore =
         });
       } catch (error) {
         console.error(
-          "Error fetchDiscountCodes:",
+          "Error fetchAffiliates:",
           error
         );
 
@@ -106,33 +121,25 @@ export const useDiscountCodeStore =
       }
     },
 
-    fetchDiscountCode: async (
-      uuid
-    ) => {
+    fetchAffiliate: async (uuid) => {
       try {
         set({
           loading: true,
-          discountCode: null,
+          affiliate: null,
         });
 
         const response =
-          await discountCodeService.getDiscountCode(
+          await affiliateService.getAffiliate(
             uuid
           );
 
-        const discountCodeData =
-          response?.data?.discount_code ??
-          response?.data?.discountCode ??
-          response?.data ??
-          null;
-
         set({
-          discountCode:
-            discountCodeData,
+          affiliate:
+            response?.data ?? null,
         });
       } catch (error) {
         console.error(
-          "Error fetchDiscountCode:",
+          "Error fetchAffiliate:",
           error
         );
 
@@ -142,41 +149,82 @@ export const useDiscountCodeStore =
       }
     },
 
-    createDiscountCode: async (
-      payload
+    fetchAffiliateOptions: async (
+      params = {}
     ) => {
+      try {
+        set({
+          loadingOptions: true,
+        });
+
+        const {
+          page = 1,
+          perPage = 20,
+          search = "",
+        } = params;
+
+        const response =
+          await affiliateService.getAffiliateOptions(
+            {
+              page,
+              per_page: perPage,
+              search,
+            }
+          );
+
+        set({
+          affiliateOptions:
+            response.data?.data ?? [],
+        });
+      } catch (error) {
+        console.error(
+          "Error fetchAffiliateOptions:",
+          error
+        );
+
+        handleApiError(error);
+      } finally {
+        set({
+          loadingOptions: false,
+        });
+      }
+    },
+
+    createAffiliate: async (payload) => {
       try {
         set({ loading: true });
 
         const response =
-          await discountCodeService.createDiscountCode(
+          await affiliateService.createAffiliate(
             payload
           );
 
         showSuccess(
           response?.message ??
-            "Código de descuento creado correctamente."
+            "Afiliado creado correctamente."
         );
 
-        await get().fetchDiscountCodes({
+        await get().fetchAffiliates({
           page: 1,
           perPage: get().perPage,
         });
+
+        return true;
       } catch (error) {
         console.error(
-          "Error createDiscountCode:",
+          "Error createAffiliate:",
           error
         );
 
         handleApiError(error);
 
-        throw error;
+        return false;
       } finally {
         set({ loading: false });
       }
     },
 
-    updateDiscountCode: async (
+    updateAffiliate: async (
       uuid,
       payload
     ) => {
@@ -184,83 +232,85 @@ export const useDiscountCodeStore =
         set({ loading: true });
 
         const response =
-          await discountCodeService.updateDiscountCode(
+          await affiliateService.updateAffiliate(
             uuid,
             payload
           );
 
         showSuccess(
           response?.message ??
-            "Código de descuento actualizado correctamente."
+            "Afiliado actualizado correctamente."
         );
 
-        await get().fetchDiscountCodes({
+        await get().fetchAffiliates({
           page: get().currentPage,
           perPage: get().perPage,
         });
+
+        return true;
       } catch (error) {
         console.error(
-          "Error updateDiscountCode:",
+          "Error updateAffiliate:",
           error
         );
 
         handleApiError(error);
 
-        throw error;
+        return false;
       } finally {
         set({ loading: false });
       }
     },
 
-    deleteDiscountCode: async (
-      uuid
-    ) => {
+    deleteAffiliate: async (uuid) => {
       try {
         set({ loading: true });
 
         const response =
-          await discountCodeService.deleteDiscountCode(
+          await affiliateService.deleteAffiliate(
             uuid
           );
 
         showSuccess(
           response?.message ??
-            "Código de descuento eliminado correctamente."
+            "Afiliado eliminado correctamente."
         );
 
         const {
           currentPage,
           perPage,
-          discountCodes,
+          affiliates,
         } = get();
 
         const nextPage =
-          discountCodes.length === 1 &&
+          affiliates.length === 1 &&
           currentPage > 1
             ? currentPage - 1
             : currentPage;
 
-        await get().fetchDiscountCodes({
+        await get().fetchAffiliates({
           page: nextPage,
           perPage,
         });
+
+        return true;
       } catch (error) {
         console.error(
-          "Error deleteDiscountCode:",
+          "Error deleteAffiliate:",
           error
         );
 
         handleApiError(error);
 
-        throw error;
+        return false;
       } finally {
         set({ loading: false });
       }
     },
 
-    clearDiscountCode: () => {
+    clearAffiliate: () => {
       set({
-        discountCode: null,
+        affiliate: null,
       });
     },
   }));

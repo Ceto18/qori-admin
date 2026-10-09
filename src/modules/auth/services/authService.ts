@@ -1,16 +1,5 @@
-// src/services/authService.ts
-
 import { api } from "@/services/api";
-
-export type UserRole = "user" | "admin" | "superadmin";
-
-export type AuthUser = {
-  uuid: string;
-  name: string;
-  last_name: string;
-  email: string;
-  role: UserRole;
-};
+import type { AuthUser } from "@/store/useAuthStore";
 
 export type LoginPayload = {
   email: string;
@@ -29,10 +18,11 @@ export type RegisterPayload = {
   country_code: string;
   phone: string;
   address: string;
-  district: string;
-  province: string;
-  department: string;
-  country: string;
+
+  country_id: number;
+  department_id: number;
+  province_id: number;
+  district_id: number;
 };
 
 export type AuthResponse = {
@@ -55,7 +45,9 @@ export const loginRequest = async (
     token: payload?.access_token ?? null,
     refreshToken: payload?.refresh_token ?? null,
     expiresIn: payload?.expires_in ?? null,
-    message: response.data?.message ?? "Inicio de sesión correcto.",
+    message:
+      response.data?.message ??
+      "Inicio de sesión correcto.",
   };
 };
 
@@ -68,9 +60,14 @@ export const registerRequest = async (
 
   return {
     user: payload?.user ?? null,
-    token: payload?.access_token ?? payload?.token ?? null,
+    token:
+      payload?.access_token ??
+      payload?.token ??
+      null,
     refreshToken: payload?.refresh_token ?? null,
     expiresIn: payload?.expires_in ?? null,
-    message: response.data?.message ?? "Registro correcto.",
+    message:
+      response.data?.message ??
+      "Registro correcto.",
   };
 };

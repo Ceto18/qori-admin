@@ -3,57 +3,175 @@ import { create } from "zustand";
 import { profileService } from "../services/profileService";
 
 import type {
-    ProfileData,
+  ProfileData,
+  UpdateProfilePayload,
+  UpdatePasswordPayload,
 } from "../types";
 
-type ProfileStore = {
-    profile: ProfileData | null;
-    loadingProfile: boolean;
-    profileError: string | null;
+import { showSuccess } from "@/shared/utils/toast";
+import { handleApiError } from "@/shared/utils/handleApiError";
 
-    fetchProfile: () => Promise<ProfileData | null>;
-    clearProfile: () => void;
+type ProfileStore = {
+  profile: ProfileData | null;
+
+  loadingProfile: boolean;
+  updatingProfile: boolean;
+  updatingPassword: boolean;
+
+  profileError: string | null;
+  passwordError: string | null;
+
+  fetchProfile: () => Promise<ProfileData | null>;
+
+  updateProfile: (
+    payload: UpdateProfilePayload
+  ) => Promise<boolean>;
+
+  updatePassword: (
+    payload: UpdatePasswordPayload
+  ) => Promise<boolean>;
+
+  clearProfile: () => void;
+
+  clearProfileError: () => void;
+  clearPasswordError: () => void;
 };
 
 export const useProfileStore = create<ProfileStore>((set) => ({
-    profile: null,
-    loadingProfile: false,
-    profileError: null,
+  profile: null,
 
-    fetchProfile: async () => {
-        try {
-            set({
-                loadingProfile: true,
-                profileError: null,
-            });
+  loadingProfile: false,
+  updatingProfile: false,
+  updatingPassword: false,
 
-            const response = await profileService.getProfile();
+  profileError: null,
+  passwordError: null,
 
-            set({
-                profile: response.data,
-                loadingProfile: false,
-            });
+  fetchProfile: async () => {
+    try {
+      set({
+        loadingProfile: true,
+        profileError: null,
+      });
 
-            return response.data;
-        } catch (error: any) {
-            const message =
-                error?.response?.data?.message ||
-                "No se pudo obtener el perfil.";
+      const response = await profileService.getProfile();
 
-            set({
-                profile: null,
-                profileError: message,
-                loadingProfile: false,
-            });
+      set({
+        profile: response.data,
+      });
 
-            return null;
-        }
-    },
+      return response.data;
+    } catch (error) {
+      console.error("Error fetchProfile:", error);
 
-    clearProfile: () =>
-        set({
-            profile: null,
-            profileError: null,
-            loadingProfile: false,
-        }),
+      handleApiError(error);
+
+      set({
+        profile: null,
+        profileError: "No se pudo obtener el perfil.",
+      });
+
+      return null;
+    } finally {
+      set({
+        loadingProfile: false,
+      });
+    }
+  },
+
+  updateProfile: async (payload) => {
+    try {
+      set({
+        updatingProfile: true,
+        profileError: null,
+      });
+
+      const response =
+        await profileService.updateProfile(payload);
+
+      showSuccess(
+        response?.message ??
+          "Perfil actualizado correctamente."
+      );
+      const profileResponse =
+        await profileService.getProfile();
+
+      set({
+        profile: profileResponse.data,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Error updateProfile:", error);
+
+      handleApiError(error);
+
+      set({
+        profileError:
+          "No se pudo actualizar el perfil.",
+      });
+
+      return false;
+    } finally {
+      set({
+        updatingProfile: false,
+      });
+    }
+  },
+
+  updatePassword: async (payload) => {
+    try {
+      set({
+        updatingPassword: true,
+        passwordError: null,
+      });
+
+      const response =
+        await profileService.updatePassword(payload);
+
+      showSuccess(
+        response?.message ??
+          "Contraseña actualizada correctamente."
+      );
+
+      return true;
+    } catch (error) {
+      console.error("Error updatePassword:", error);
+
+      handleApiError(error);
+
+      set({
+        passwordError:
+          "No se pudo actualizar la contraseña.",
+      });
+
+      return false;
+    } finally {
+      set({
+        updatingPassword: false,
+      });
+    }
+  },
+
+  clearProfile: () =>
+    set({
+      profile: null,
+
+      loadingProfile: false,
+      updatingProfile: false,
+      updatingPassword: false,
+
+      profileError: null,
+      passwordError: null,
+    }),
+
+  clearProfileError: () =>
+    set({
+      profileError: null,
+    }),
+
+  clearPasswordError: () =>
+    set({
+      passwordError: null,
+    }),
 }));

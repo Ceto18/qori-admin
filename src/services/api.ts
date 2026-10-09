@@ -79,11 +79,6 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !isAuthRequest) {
       const token = useAuthStore.getState().token || getPersistedToken();
-
-      /**
-       * Solo cerramos sesión si realmente había token.
-       * Esto evita borrar la sesión por una petición que salió antes de hidratar.
-       */
       if (token) {
         useAuthStore.getState().logout();
       }

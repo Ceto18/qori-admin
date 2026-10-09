@@ -3,7 +3,11 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-export type UserRole = "user" | "admin" | "superadmin";
+export type UserRole =
+  | "user"
+  | "affiliate"
+  | "admin"
+  | "superadmin";
 
 export type AuthUser = {
   uuid: string;
@@ -34,7 +38,9 @@ interface AuthState {
   setHasHydrated: (value: boolean) => void;
 
   hasRole: (roles: UserRole[]) => boolean;
+
   isUser: () => boolean;
+  isAffiliate: () => boolean;
   isAdmin: () => boolean;
   isSuperAdmin: () => boolean;
   isAdminOrSuperAdmin: () => boolean;
@@ -97,6 +103,10 @@ export const useAuthStore = create<AuthState>()(
 
       isUser: () => {
         return get().user?.role === "user";
+      },
+
+      isAffiliate: () => {
+        return get().user?.role === "affiliate";
       },
 
       isAdmin: () => {

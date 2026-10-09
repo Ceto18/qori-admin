@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import Input from "@/shared/components/form/input/InputField";
 import Label from "@/shared/components/form/Label";
 
+import { useAffiliateStore } from "@/modules/affiliates/store/useAffiliateStore";
+
 import {
   DiscountCode,
   DiscountCodeFormValues,
@@ -27,6 +29,8 @@ const initialFormState: DiscountCodeFormValues = {
   max_uses: "",
   starts_at: "",
   expires_at: "",
+  user_id: "",
+  active: true,
 };
 
 export default function DiscountCodeForm({
@@ -37,8 +41,25 @@ export default function DiscountCodeForm({
 }: Props) {
   const [form, setForm] = useState<DiscountCodeFormValues>(initialFormState);
 
+  const {
+    affiliateOptions,
+    loadingOptions,
+    fetchAffiliateOptions,
+  } = useAffiliateStore();
+
   useEffect(() => {
-    if (!initialData) return;
+    fetchAffiliateOptions({
+      page: 1,
+      perPage: 100,
+      search: "",
+    });
+  }, [fetchAffiliateOptions]);
+
+  useEffect(() => {
+    if (!initialData) {
+      setForm(initialFormState);
+      return;
+    }
 
     setForm({
       name: initialData.name ?? "",
@@ -46,17 +67,24 @@ export default function DiscountCodeForm({
       type: initialData.type ?? "percentage",
       value: String(initialData.value ?? ""),
       max_uses:
-        initialData.max_uses === null || initialData.max_uses === undefined
+        initialData.max_uses === null ||
+          initialData.max_uses === undefined
           ? ""
           : String(initialData.max_uses),
-      starts_at: toDateTimeLocalValue(initialData.starts_at),
-      expires_at: toDateTimeLocalValue(initialData.expires_at),
+      starts_at: toDateInputValue(initialData.starts_at),
+      expires_at: toDateInputValue(initialData.expires_at),
+      user_id:
+        initialData.user_id === null ||
+          initialData.user_id === undefined
+          ? ""
+          : String(initialData.user_id),
+      active: initialData.active ?? true,
     });
   }, [initialData]);
 
   const handleChange = (
     key: keyof DiscountCodeFormValues,
-    value: string
+    value: string | boolean
   ) => {
     setForm((prev) => ({
       ...prev,
@@ -64,25 +92,38 @@ export default function DiscountCodeForm({
     }));
   };
 
-  const buildPayload = (): DiscountCodePayload => {
-    return {
-      name: form.name,
-      code: form.code,
-      type: form.type,
-      value: Number(form.value),
-      max_uses: form.max_uses ? Number(form.max_uses) : null,
-      starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
-      expires_at: form.expires_at
-        ? new Date(form.expires_at).toISOString()
-        : null,
-    };
-  };
+  const buildPayload = (): DiscountCodePayload => ({
+    name: form.name.trim(),
+    code: form.code.trim().toUpperCase(),
+    type: form.type,
+    value: Number(form.value),
+    max_uses: form.max_uses
+      ? Number(form.max_uses)
+      : null,
+    starts_at: form.starts_at
+      ? `${form.starts_at} 00:00:00`
+      : null,
+    expires_at: form.expires_at
+      ? `${form.expires_at} 23:59:59`
+      : null,
+    user_id: form.user_id
+      ? Number(form.user_id)
+      : null,
+    active: form.active,
+  });
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
+
+    if (loading) return;
 
     await onSubmit(buildPayload());
   };
+
+  const selectClassName =
+    "h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90";
 
   return (
     <form
@@ -96,7 +137,9 @@ export default function DiscountCodeForm({
             type="text"
             value={form.name}
             placeholder="Ej. Código Principal"
-            onChange={(e) => handleChange("name", e.target.value)}
+            onChange={(e) =>
+              handleChange("name", e.target.value)
+            }
           />
         </div>
 
@@ -107,9 +150,42 @@ export default function DiscountCodeForm({
             value={form.code}
             placeholder="Ej. ABCD123"
             onChange={(e) =>
-              handleChange("code", e.target.value.toUpperCase())
+              handleChange(
+                "code",
+                e.target.value.toUpperCase()
+              )
             }
           />
+        </div>
+
+        <div>
+          <Label>Afiliado</Label>
+          <select
+            value={form.user_id}
+            onChange={(e) =>
+              handleChange(
+                "user_id",
+                e.target.value
+              )
+            }
+            disabled={loadingOptions}
+            className={selectClassName}
+          >
+            <option value="">
+              {loadingOptions
+                ? "Cargando afiliados..."
+                : "Sin afiliado"}
+            </option>
+
+            {affiliateOptions.map((affiliate) => (
+              <option
+                key={affiliate.uuid}
+                value={affiliate.id}
+              >
+                {affiliate.full_name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
@@ -117,9 +193,12 @@ export default function DiscountCodeForm({
           <select
             value={form.type}
             onChange={(e) =>
-              handleChange("type", e.target.value as DiscountCodeType)
+              handleChange(
+                "type",
+                e.target.value as DiscountCodeType
+              )
             }
-            className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+            className={selectClassName}
           >
             <option value="percentage">Porcentaje</option>
             <option value="fixed">Monto fijo</option>
@@ -132,7 +211,9 @@ export default function DiscountCodeForm({
             type="number"
             value={form.value}
             placeholder="Ej. 25"
-            onChange={(e) => handleChange("value", e.target.value)}
+            onChange={(e) =>
+              handleChange("value", e.target.value)
+            }
           />
         </div>
 
@@ -142,25 +223,33 @@ export default function DiscountCodeForm({
             type="number"
             value={form.max_uses}
             placeholder="Vacío = ilimitado"
-            onChange={(e) => handleChange("max_uses", e.target.value)}
+            onChange={(e) =>
+              handleChange("max_uses", e.target.value)
+            }
           />
         </div>
 
         <div>
           <Label>Fecha de inicio</Label>
-          <DateTimeInput
+          <DateInput
             value={form.starts_at}
-            onChange={(value) => handleChange("starts_at", value)}
+            onChange={(value) =>
+              handleChange("starts_at", value)
+            }
           />
         </div>
 
         <div>
           <Label>Fecha de expiración</Label>
-          <DateTimeInput
+          <DateInput
             value={form.expires_at}
-            onChange={(value) => handleChange("expires_at", value)}
+            onChange={(value) =>
+              handleChange("expires_at", value)
+            }
           />
         </div>
+
+
       </div>
 
       <div className="mt-6 flex justify-end gap-3">
@@ -180,14 +269,14 @@ export default function DiscountCodeForm({
           disabled={loading}
           className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Guardar
+          {loading ? "Guardando..." : "Guardar"}
         </button>
       </div>
     </form>
   );
 }
 
-function DateTimeInput({
+function DateInput({
   value,
   onChange,
 }: {
@@ -196,32 +285,48 @@ function DateTimeInput({
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const openPicker = () => {
-    inputRef.current?.showPicker?.();
+  const handleClick = () => {
+    const input = inputRef.current;
+
+    if (!input) return;
+
+    try {
+      input.showPicker?.();
+    } catch {
+      input.focus();
+    }
   };
 
   return (
     <input
       ref={inputRef}
-      type="datetime-local"
+      type="date"
       value={value}
-      onClick={openPicker}
-      onFocus={openPicker}
-      onChange={(e) => onChange(e.target.value)}
+      onClick={handleClick}
+      onChange={(e) =>
+        onChange(e.target.value)
+      }
       className="h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
     />
   );
 }
 
-function toDateTimeLocalValue(value: string | null) {
+function toDateInputValue(value: string | null) {
   if (!value) return "";
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) return "";
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
 
-  const offset = date.getTimezoneOffset();
-  const localDate = new Date(date.getTime() - offset * 60 * 1000);
+  const year = date.getFullYear();
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, "0");
+  const day = String(
+    date.getDate()
+  ).padStart(2, "0");
 
-  return localDate.toISOString().slice(0, 16);
+  return `${year}-${month}-${day}`;
 }
