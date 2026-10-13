@@ -6,7 +6,10 @@ import { Alert, Spin } from "antd";
 
 import AffiliateForm from "@/modules/affiliates/components/form/AffiliateForm";
 import { useAffiliateStore } from "@/modules/affiliates/store/useAffiliateStore";
-import { UpdateAffiliatePayload } from "@/modules/affiliates/types";
+
+import type {
+    UpdateAffiliatePayload,
+} from "@/modules/affiliates/types";
 
 function AffiliateEditInitialLoading() {
     return (
@@ -91,9 +94,7 @@ export default function EditAffiliatePage() {
     ]);
 
     const handleSubmit = async (
-        payload:
-            | UpdateAffiliatePayload
-            | any
+        payload: UpdateAffiliatePayload
     ) => {
         try {
             if (!uuid) {
@@ -105,7 +106,7 @@ export default function EditAffiliatePage() {
             const success =
                 await updateAffiliate(
                     uuid,
-                    payload as UpdateAffiliatePayload
+                    payload
                 );
 
             if (!success) return;

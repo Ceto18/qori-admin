@@ -98,3 +98,70 @@ export type ActionResponse = {
   success: boolean;
   message: string;
 };
+
+export type AffiliateInfoUser = {
+  uuid: string;
+  email: string;
+  active: boolean;
+};
+
+export type AffiliateDiscountCode = {
+  uuid: string;
+  name: string;
+  code: string;
+};
+
+export type AffiliateInfo = {
+  user: AffiliateInfoUser;
+  discount_code: AffiliateDiscountCode;
+  total_uses: number;
+};
+
+export type AffiliateInfoResponse = {
+  success: boolean;
+  message: string;
+  data: AffiliateInfo;
+};
+
+export type AffiliateReferralSubscription = {
+  name: string;
+  status: string;
+};
+
+export type AffiliateReferral = {
+  uuid: string;
+  full_name: string;
+  document: string;
+  used_at: string;
+  discount_amount: string;
+  subscription: AffiliateReferralSubscription;
+};
+
+export type AffiliateReferralLink = {
+  url: string | null;
+  label: string;
+  page: number | null;
+  active: boolean;
+};
+
+export type AffiliateReferralsPagination = {
+  current_page: number;
+  data: AffiliateReferral[];
+  first_page_url: string;
+  from: number | null;
+  last_page: number;
+  last_page_url: string;
+  links: AffiliateReferralLink[];
+  next_page_url: string | null;
+  path: string;
+  per_page: number;
+  prev_page_url: string | null;
+  to: number | null;
+  total: number;
+};
+
+export type AffiliateReferralsResponse = {
+  success: boolean;
+  message: string;
+  data: AffiliateReferralsPagination;
+};

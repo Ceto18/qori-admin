@@ -9,6 +9,8 @@ import type {
   AffiliateOptionsResponse,
   AffiliateResponse,
   ActionResponse,
+  AffiliateInfoResponse,
+  AffiliateReferralsResponse,
 } from "../types";
 
 type AffiliateListParams = {
@@ -21,6 +23,11 @@ type AffiliateOptionsParams = {
   page?: number;
   per_page?: number;
   search?: string;
+};
+
+type AffiliateReferralsParams = {
+  page?: number;
+  per_page?: number;
 };
 
 export const affiliateService = {
@@ -89,6 +96,27 @@ export const affiliateService = {
   ): Promise<ActionResponse> => {
     const { data } = await api.delete<ActionResponse>(
       `/admin/affiliates/${uuid}`
+    );
+
+    return data;
+  },
+
+  getInfo: async (): Promise<AffiliateInfoResponse> => {
+    const { data } = await api.get<AffiliateInfoResponse>(
+      "/affiliate/info"
+    );
+
+    return data;
+  },
+
+  getReferrals: async (
+    params: AffiliateReferralsParams = {}
+  ): Promise<AffiliateReferralsResponse> => {
+    const { data } = await api.get<AffiliateReferralsResponse>(
+      "/affiliate/referrals",
+      {
+        params,
+      }
     );
 
     return data;

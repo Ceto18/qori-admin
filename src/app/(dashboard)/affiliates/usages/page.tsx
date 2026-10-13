@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import RoleGuard from "@/modules/auth/RoleGuard";
 
@@ -10,106 +10,92 @@ import DataTable, {
 
 import TableToolbar from "@/shared/components/table/TableToolbar";
 import TablePagination from "@/shared/components/table/TablePagination";
-
-type AffiliateUsage = {
-    uuid: string;
-    name: string;
-    email: string;
-    code: string;
-    plan: string | null;
-    used_at: string;
-};
+import { useAffiliateStore } from "@/modules/affiliates/store/useAffiliateStore";
+import { AffiliateReferral } from "@/modules/affiliates/types";
+;
 
 function AffiliateUsagesPageContent() {
     const [search, setSearch] = useState("");
 
-    // TODO:
-    // Reemplazar por:
-    //
-    // const {
-    //   usages,
-    //   currentPage,
-    //   totalPages,
-    //   perPage,
-    //   loading,
-    //   fetchUsages,
-    // } = useAffiliateDashboardStore();
+    const {
+        affiliateReferrals,
+        loadingReferrals,
+        fetchAffiliateReferrals,
+    } = useAffiliateStore();
 
-    const usages: AffiliateUsage[] = [];
+    const referrals =
+        affiliateReferrals?.data ?? [];
 
-    const currentPage = 1;
-    const totalPages = 1;
-    const perPage = 10;
-    const loading = false;
+    const currentPage =
+        affiliateReferrals?.current_page ?? 1;
 
-    const filteredUsages = useMemo(() => {
-        if (!search.trim()) {
-            return usages;
-        }
+    const totalPages =
+        affiliateReferrals?.last_page ?? 1;
 
-        const query =
-            search.toLowerCase().trim();
+    const perPage =
+        affiliateReferrals?.per_page ?? 10;
 
-        return usages.filter((usage) => {
-            return (
-                usage.name
-                    .toLowerCase()
-                    .includes(query) ||
-                usage.email
-                    .toLowerCase()
-                    .includes(query) ||
-                usage.code
-                    .toLowerCase()
-                    .includes(query)
-            );
+    useEffect(() => {
+        fetchAffiliateReferrals({
+            page: 1,
+            perPage: 10,
         });
-    }, [usages, search]);
+    }, [fetchAffiliateReferrals]);
 
-    const columns: DataTableColumn<AffiliateUsage>[] =
-        [
-            {
-                key: "name",
-                header: "Usuario",
-                render: (usage) => (
-                    <div>
-                        <p className="font-medium text-gray-800 dark:text-white/90">
-                            {usage.name || "-"}
-                        </p>
+    const columns: DataTableColumn<AffiliateReferral>[] = [
+        {
+            key: "full_name",
+            header: "Usuario",
+            render: (referral) => (
+                <div>
+                    <p className="font-medium text-gray-800 dark:text-white/90">
+                        {referral.full_name || "-"}
+                    </p>
 
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {usage.email || "-"}
-                        </p>
-                    </div>
-                ),
-            },
-            {
-                key: "code",
-                header: "Código",
-                render: (usage) => (
-                    <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {usage.code || "-"}
-                    </span>
-                ),
-            },
-            {
-                key: "plan",
-                header: "Plan",
-                render: (usage) => (
-                    <span className="text-gray-500 dark:text-gray-400">
-                        {usage.plan || "Sin plan"}
-                    </span>
-                ),
-            },
-            {
-                key: "used_at",
-                header: "Fecha de uso",
-                render: (usage) => (
-                    <span className="text-gray-500 dark:text-gray-400">
-                        {formatDate(usage.used_at)}
-                    </span>
-                ),
-            },
-        ];
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {referral.document || "-"}
+                    </p>
+                </div>
+            ),
+        },
+        {
+            key: "subscription",
+            header: "Plan",
+            render: (referral) => (
+                <div>
+                    <p className="text-gray-700 dark:text-gray-300">
+                        {referral.subscription?.name || "Sin plan"}
+                    </p>
+
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        {getSubscriptionStatusLabel(
+                            referral.subscription?.status
+                        )}
+                    </p>
+                </div>
+            ),
+        },
+        {
+            key: "discount_amount",
+            header: "Descuento",
+            render: (referral) => (
+                <span className="font-medium text-gray-700 dark:text-gray-300">
+                    {formatCurrency(
+                        referral.discount_amount
+                    )}
+                </span>
+            ),
+        },
+        {
+            key: "used_at",
+            header: "Fecha de uso",
+            render: (referral) => (
+                <span className="text-gray-500 dark:text-gray-400">
+                    {formatDate(referral.used_at)}
+                </span>
+            ),
+        },
+    ];
 
     const handleSearchChange = (
         value: string
@@ -118,47 +104,47 @@ function AffiliateUsagesPageContent() {
     };
 
     const handleSearchSubmit = () => {
-        // TODO:
-        // Cuando tengamos el endpoint:
-        //
-        // fetchUsages({
-        //   page: 1,
-        //   perPage,
-        //   search,
-        // });
     };
 
     const handlePageChange = (
         page: number
     ) => {
-        console.log(
-            "Cambiar página:",
-            page
-        );
-
-        // TODO:
-        // fetchUsages({
-        //   page,
-        //   perPage,
-        //   search,
-        // });
+        fetchAffiliateReferrals({
+            page,
+            perPage,
+        });
     };
 
     const handlePerPageChange = (
         newPerPage: number
     ) => {
-        console.log(
-            "Cambiar registros por página:",
-            newPerPage
-        );
-
-        // TODO:
-        // fetchUsages({
-        //   page: 1,
-        //   perPage: newPerPage,
-        //   search,
-        // });
+        fetchAffiliateReferrals({
+            page: 1,
+            perPage: newPerPage,
+        });
     };
+
+    const filteredReferrals =
+        search.trim()
+            ? referrals.filter((referral) => {
+                const query =
+                    search
+                        .toLowerCase()
+                        .trim();
+
+                return (
+                    referral.full_name
+                        ?.toLowerCase()
+                        .includes(query) ||
+                    referral.document
+                        ?.toLowerCase()
+                        .includes(query) ||
+                    referral.subscription?.name
+                        ?.toLowerCase()
+                        .includes(query)
+                );
+            })
+            : referrals;
 
     return (
         <div className="space-y-6">
@@ -176,12 +162,12 @@ function AffiliateUsagesPageContent() {
             />
 
             <DataTable
-                data={filteredUsages}
+                data={filteredReferrals}
                 columns={columns}
-                loading={loading}
+                loading={loadingReferrals}
                 emptyMessage="Todavía no se registraron usos de tu código."
-                getRowKey={(usage) =>
-                    usage.uuid
+                getRowKey={(referral) =>
+                    referral.uuid
                 }
                 showView={false}
                 showEdit={false}
@@ -209,6 +195,24 @@ function AffiliateUsagesPageContent() {
     );
 }
 
+function formatCurrency(
+    value: string | number
+) {
+    const amount = Number(value);
+
+    if (Number.isNaN(amount)) {
+        return "S/ 0.00";
+    }
+
+    return new Intl.NumberFormat(
+        "es-PE",
+        {
+            style: "currency",
+            currency: "PEN",
+        }
+    ).format(amount);
+}
+
 function formatDate(
     value: string | null
 ) {
@@ -234,6 +238,27 @@ function formatDate(
             minute: "2-digit",
         }
     ).format(date);
+}
+
+function getSubscriptionStatusLabel(
+    status?: string
+) {
+    const labels: Record<
+        string,
+        string
+    > = {
+        active: "Activa",
+        cancelled: "Cancelada",
+        canceled: "Cancelada",
+        pending: "Pendiente",
+        expired: "Expirada",
+    };
+
+    if (!status) {
+        return "-";
+    }
+
+    return labels[status] ?? status;
 }
 
 export default function AffiliateUsagesPage() {

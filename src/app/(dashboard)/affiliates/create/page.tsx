@@ -5,7 +5,8 @@ import { Spin } from "antd";
 
 import AffiliateForm from "@/modules/affiliates/components/form/AffiliateForm";
 import { useAffiliateStore } from "@/modules/affiliates/store/useAffiliateStore";
-import {
+
+import type {
   AffiliatePayload,
   UpdateAffiliatePayload,
 } from "@/modules/affiliates/types";
@@ -37,21 +38,14 @@ export default function CreateAffiliatePage() {
       | AffiliatePayload
       | UpdateAffiliatePayload
   ) => {
-    try {
-      const success =
-        await createAffiliate(
-          payload as AffiliatePayload
-        );
-
-      if (!success) return;
-
-      router.push("/affiliates");
-    } catch (error) {
-      console.error(
-        "Error al crear afiliado:",
-        error
+    const success =
+      await createAffiliate(
+        payload as AffiliatePayload
       );
-    }
+
+    if (!success) return;
+
+    router.push("/affiliates");
   };
 
   const handleCancel = () => {
@@ -66,8 +60,7 @@ export default function CreateAffiliatePage() {
         </h1>
 
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Registra un nuevo afiliado
-          ingresando sus datos personales
+          Registra un nuevo afiliado ingresando sus datos personales
           y credenciales de acceso.
         </p>
       </div>

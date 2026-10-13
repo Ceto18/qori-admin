@@ -7,6 +7,8 @@ import type {
   AffiliateOption,
   AffiliatePayload,
   UpdateAffiliatePayload,
+  AffiliateInfo,
+  AffiliateReferralsPagination,
 } from "../types";
 
 import { showSuccess } from "@/shared/utils/toast";
@@ -24,13 +26,23 @@ type FetchAffiliateOptionsParams = {
   search?: string;
 };
 
+type FetchAffiliateReferralsParams = {
+  page?: number;
+  perPage?: number;
+};
+
 interface AffiliateState {
   affiliates: Affiliate[];
   affiliate: Affiliate | null;
   affiliateOptions: AffiliateOption[];
 
+  affiliateInfo: AffiliateInfo | null;
+  affiliateReferrals: AffiliateReferralsPagination | null;
+
   loading: boolean;
   loadingOptions: boolean;
+  loadingInfo: boolean;
+  loadingReferrals: boolean;
 
   currentPage: number;
   totalPages: number;
@@ -62,7 +74,15 @@ interface AffiliateState {
     uuid: string
   ) => Promise<boolean>;
 
+  fetchAffiliateInfo: () => Promise<void>;
+
+  fetchAffiliateReferrals: (
+    params?: FetchAffiliateReferralsParams
+  ) => Promise<void>;
+
   clearAffiliate: () => void;
+  clearAffiliateInfo: () => void;
+  clearAffiliateReferrals: () => void;
 }
 
 export const useAffiliateStore =
@@ -71,8 +91,13 @@ export const useAffiliateStore =
     affiliate: null,
     affiliateOptions: [],
 
+    affiliateInfo: null,
+    affiliateReferrals: null,
+
     loading: false,
     loadingOptions: false,
+    loadingInfo: false,
+    loadingReferrals: false,
 
     currentPage: 1,
     totalPages: 1,
@@ -308,9 +333,93 @@ export const useAffiliateStore =
       }
     },
 
+    fetchAffiliateInfo: async () => {
+      try {
+        set({
+          loadingInfo: true,
+        });
+
+        const response =
+          await affiliateService.getInfo();
+
+        set({
+          affiliateInfo:
+            response?.data ?? null,
+        });
+      } catch (error) {
+        console.error(
+          "Error fetchAffiliateInfo:",
+          error
+        );
+
+        handleApiError(error);
+
+        set({
+          affiliateInfo: null,
+        });
+      } finally {
+        set({
+          loadingInfo: false,
+        });
+      }
+    },
+
+    fetchAffiliateReferrals: async (
+      params = {}
+    ) => {
+      try {
+        set({
+          loadingReferrals: true,
+        });
+
+        const {
+          page = 1,
+          perPage = 10,
+        } = params;
+
+        const response =
+          await affiliateService.getReferrals({
+            page,
+            per_page: perPage,
+          });
+
+        set({
+          affiliateReferrals:
+            response?.data ?? null,
+        });
+      } catch (error) {
+        console.error(
+          "Error fetchAffiliateReferrals:",
+          error
+        );
+
+        handleApiError(error);
+
+        set({
+          affiliateReferrals: null,
+        });
+      } finally {
+        set({
+          loadingReferrals: false,
+        });
+      }
+    },
+
     clearAffiliate: () => {
       set({
         affiliate: null,
+      });
+    },
+
+    clearAffiliateInfo: () => {
+      set({
+        affiliateInfo: null,
+      });
+    },
+
+    clearAffiliateReferrals: () => {
+      set({
+        affiliateReferrals: null,
       });
     },
   }));

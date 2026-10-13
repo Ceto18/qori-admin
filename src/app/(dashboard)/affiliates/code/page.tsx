@@ -1,19 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Copy } from "lucide-react";
 
 import RoleGuard from "@/modules/auth/RoleGuard";
+import { useAffiliateStore } from "@/modules/affiliates/store/useAffiliateStore";
 
 function AffiliateCodePageContent() {
     const [copied, setCopied] = useState(false);
 
-    // TODO:
-    // Estos valores vendrán posteriormente del store/API.
-    const code = "";
-    const totalUses = 0;
-    const monthlyUses = 0;
-    const active = true;
+    const {
+        affiliateInfo,
+        loadingInfo,
+        fetchAffiliateInfo,
+    } = useAffiliateStore();
+
+    useEffect(() => {
+        fetchAffiliateInfo();
+    }, [fetchAffiliateInfo]);
+
+    const code =
+        affiliateInfo?.discount_code?.code ?? "";
+
+    const totalUses =
+        affiliateInfo?.total_uses ?? 0;
+
+    const active =
+        affiliateInfo?.user?.active ?? false;
+
+    const codeName =
+        affiliateInfo?.discount_code?.name ?? "";
 
     const handleCopy = async () => {
         if (!code) return;
@@ -34,6 +50,30 @@ function AffiliateCodePageContent() {
         }
     };
 
+    if (loadingInfo) {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <div className="h-7 w-52 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+                    <div className="mt-2 h-4 w-80 max-w-full animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+                    <div className="lg:col-span-2">
+                        <div className="h-48 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-800" />
+                    </div>
+
+                    <div className="h-48 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-800" />
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <div className="h-36 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-800" />
+                    <div className="h-36 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-800" />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             <div>
@@ -42,8 +82,7 @@ function AffiliateCodePageContent() {
                 </h1>
 
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Consulta tu código de afiliado y revisa
-                    su cantidad de usos.
+                    Consulta tu código de afiliado y revisa su cantidad de usos.
                 </p>
             </div>
 
@@ -57,8 +96,7 @@ function AffiliateCodePageContent() {
                                 </p>
 
                                 <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
-                                    Comparte este código con tus
-                                    referidos.
+                                    Comparte este código con tus referidos.
                                 </p>
                             </div>
 
@@ -101,8 +139,13 @@ function AffiliateCodePageContent() {
 
                         {!code && (
                             <p className="mt-3 text-sm text-warning-600 dark:text-warning-400">
-                                Actualmente no tienes un código de
-                                afiliado asignado.
+                                Actualmente no tienes un código de afiliado asignado.
+                            </p>
+                        )}
+
+                        {codeName && (
+                            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                                {codeName}
                             </p>
                         )}
                     </div>
@@ -125,17 +168,11 @@ function AffiliateCodePageContent() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <MetricCard
                     title="Usos totales"
                     value={totalUses}
                     description="Cantidad total de veces que se utilizó tu código."
-                />
-
-                <MetricCard
-                    title="Usos este mes"
-                    value={monthlyUses}
-                    description="Usos registrados durante el mes actual."
                 />
 
                 <MetricCard
