@@ -91,7 +91,7 @@ export default function MembershipPaymentModal({
     const [discountCode, setDiscountCode] = useState("");
     const [paymentSuccess, setPaymentSuccess] = useState(false);
 
-    const { user } = useAuthStore();
+    const { user, refreshSession } = useAuthStore();
 
     const {
         preview,
@@ -308,64 +308,68 @@ export default function MembershipPaymentModal({
                     },
                 });
 
-            culqiCheckout.culqi =
-                async () => {
-                    if (culqiCheckout.token) {
-                        const tokenId =
-                            culqiCheckout.token.id;
+            culqiCheckout.culqi = async () => {
+                if (culqiCheckout.token) {
+                    const tokenId = culqiCheckout.token.id;
 
-                        culqiCheckout.close();
+                    culqiCheckout.close();
 
-                        try {
-                            const response =
-                                await subscribe({
-                                    subscription_uuid:
-                                        subscription.uuid,
-                                    token_id:
-                                        tokenId,
-                                });
+                    try {
+                        const response = await subscribe({
+                            subscription_uuid: subscription.uuid,
+                            token_id: tokenId,
+                        });
 
-                            if (!response) {
-                                throw new Error(
-                                    "No se pudo procesar la suscripción."
-                                );
-                            }
-
-                            clearPreview();
-                            clearCheckout();
-                            setPaymentSuccess(true);
-                        } catch (error) {
-                            console.error(
-                                "Error subscribe:",
-                                error
+                        if (!response) {
+                            throw new Error(
+                                "No se pudo procesar la suscripción."
                             );
                         }
 
-                        return;
-                    }
+                        const refreshed = await refreshSession();
 
-                    if (culqiCheckout.order) {
-                        culqiCheckout.close();
+                        if (!refreshed) {
+                            console.error(
+                                "La suscripción fue activada, pero no se pudo actualizar la sesión."
+                            );
+                        }
 
-                        console.log(
-                            "Order Culqi:",
-                            culqiCheckout.order
-                        );
-
+                        clearPreview();
                         clearCheckout();
-
-                        return;
+                        setPaymentSuccess(true);
+                    } catch (error) {
+                        console.error(
+                            "Error subscribe:",
+                            error
+                        );
                     }
 
-                    console.error(
-                        "Error Culqi:",
-                        culqiCheckout.error
+                    return;
+                }
+
+                if (culqiCheckout.order) {
+                    culqiCheckout.close();
+
+                    console.log(
+                        "Order Culqi:",
+                        culqiCheckout.order
                     );
 
                     clearCheckout();
-                };
+
+                    return;
+                }
+
+                console.error(
+                    "Error Culqi:",
+                    culqiCheckout.error
+                );
+
+                clearCheckout();
+            };
 
             culqiCheckout.open();
+
         } catch (error) {
             console.error(
                 "Error creando checkout:",

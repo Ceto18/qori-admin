@@ -33,11 +33,18 @@ export type AuthResponse = {
   message: string;
 };
 
+export type RefreshResponse = {
+  token: string | null;
+  refreshToken: string | null;
+  role: string | null;
+  expiresIn: number | null;
+  message: string;
+};
+
 export const loginRequest = async (
   data: LoginPayload
 ): Promise<AuthResponse> => {
   const response = await api.post("/auth/login", data);
-
   const payload = response.data?.data;
 
   return {
@@ -55,7 +62,6 @@ export const registerRequest = async (
   data: RegisterPayload
 ): Promise<AuthResponse> => {
   const response = await api.post("/auth/register", data);
-
   const payload = response.data?.data;
 
   return {
@@ -69,5 +75,25 @@ export const registerRequest = async (
     message:
       response.data?.message ??
       "Registro correcto.",
+  };
+};
+
+export const refreshRequest = async (
+  refreshToken: string
+): Promise<RefreshResponse> => {
+  const response = await api.post("/auth/refresh", {
+    refresh_token: refreshToken,
+  });
+
+  const payload = response.data?.data;
+
+  return {
+    token: payload?.access_token ?? null,
+    refreshToken: payload?.refresh_token ?? null,
+    role: payload?.role ?? null,
+    expiresIn: payload?.expires_in ?? null,
+    message:
+      response.data?.message ??
+      "Token actualizado.",
   };
 };

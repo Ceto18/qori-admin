@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { refreshRequest } from "@/modules/auth/services/authService";
 
 export type UserRole =
   | "user"
@@ -33,6 +34,8 @@ interface AuthState {
   }) => void;
 
   setUser: (user: AuthUser) => void;
+
+  refreshSession: () => Promise<boolean>;
 
   logout: () => void;
   setHasHydrated: (value: boolean) => void;
@@ -72,6 +75,55 @@ export const useAuthStore = create<AuthState>()(
 
       setUser: (user) => {
         set({ user });
+      },
+
+      refreshSession: async () => {
+        const currentRefreshToken = get().refreshToken;
+        const currentUser = get().user;
+
+        if (!currentRefreshToken) {
+          console.error("No existe refresh token.");
+          return false;
+        }
+
+        try {
+          const response = await refreshRequest(
+            currentRefreshToken
+          );
+
+          if (!response.token) {
+            console.error(
+              "No se recibió un nuevo access token."
+            );
+
+            return false;
+          }
+
+          const role = response.role as UserRole | null;
+
+          set({
+            token: response.token,
+            refreshToken:
+              response.refreshToken ??
+              currentRefreshToken,
+            expiresIn: response.expiresIn,
+            user: currentUser
+              ? {
+                  ...currentUser,
+                  role: role ?? currentUser.role,
+                }
+              : null,
+          });
+
+          return true;
+        } catch (error) {
+          console.error(
+            "Error al refrescar la sesión:",
+            error
+          );
+
+          return false;
+        }
       },
 
       logout: () => {
@@ -120,13 +172,18 @@ export const useAuthStore = create<AuthState>()(
       isAdminOrSuperAdmin: () => {
         const role = get().user?.role;
 
-        return role === "admin" || role === "superadmin";
+        return (
+          role === "admin" ||
+          role === "superadmin"
+        );
       },
     }),
     {
       name: "auth-storage",
 
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(
+        () => localStorage
+      ),
 
       partialize: (state) => ({
         user: state.user,

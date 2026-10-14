@@ -29,10 +29,10 @@ export default function DashboardHero({ hasActiveMembership }: Props) {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           {hasActiveMembership ? (
             <Link
-              href="/cards"
+              href="/organizations"
               className="inline-flex items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600"
             >
-              Ir a mis tarjetas
+              Ir a mis organizaciones
             </Link>
           ) : (
             <Link
