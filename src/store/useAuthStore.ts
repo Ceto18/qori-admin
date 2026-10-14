@@ -92,25 +92,20 @@ export const useAuthStore = create<AuthState>()(
           );
 
           if (!response.token) {
-            console.error(
-              "No se recibió un nuevo access token."
-            );
-
             return false;
           }
 
-          const role = response.role as UserRole | null;
+          const newRole = response.role as UserRole | null;
 
           set({
             token: response.token,
             refreshToken:
-              response.refreshToken ??
-              currentRefreshToken,
+              response.refreshToken ?? currentRefreshToken,
             expiresIn: response.expiresIn,
             user: currentUser
               ? {
                   ...currentUser,
-                  role: role ?? currentUser.role,
+                  role: newRole ?? currentUser.role,
                 }
               : null,
           });
