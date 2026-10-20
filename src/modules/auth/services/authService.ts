@@ -25,6 +25,10 @@ export type RegisterPayload = {
   district_id: number;
 };
 
+export type ForgotPasswordPayload = {
+  email: string;
+};
+
 export type AuthResponse = {
   user: AuthUser | null;
   token: string | null;
@@ -41,17 +45,32 @@ export type RefreshResponse = {
   message: string;
 };
 
+export type ForgotPasswordResponse = {
+  success: boolean;
+  message: string;
+};
+
 export const loginRequest = async (
   data: LoginPayload
 ): Promise<AuthResponse> => {
-  const response = await api.post("/auth/login", data);
+  const response = await api.post(
+    "/auth/login",
+    data
+  );
+
   const payload = response.data?.data;
 
   return {
     user: payload?.user ?? null,
-    token: payload?.access_token ?? null,
-    refreshToken: payload?.refresh_token ?? null,
-    expiresIn: payload?.expires_in ?? null,
+    token:
+      payload?.access_token ??
+      null,
+    refreshToken:
+      payload?.refresh_token ??
+      null,
+    expiresIn:
+      payload?.expires_in ??
+      null,
     message:
       response.data?.message ??
       "Inicio de sesión correcto.",
@@ -61,7 +80,11 @@ export const loginRequest = async (
 export const registerRequest = async (
   data: RegisterPayload
 ): Promise<AuthResponse> => {
-  const response = await api.post("/auth/register", data);
+  const response = await api.post(
+    "/auth/register",
+    data
+  );
+
   const payload = response.data?.data;
 
   return {
@@ -70,8 +93,12 @@ export const registerRequest = async (
       payload?.access_token ??
       payload?.token ??
       null,
-    refreshToken: payload?.refresh_token ?? null,
-    expiresIn: payload?.expires_in ?? null,
+    refreshToken:
+      payload?.refresh_token ??
+      null,
+    expiresIn:
+      payload?.expires_in ??
+      null,
     message:
       response.data?.message ??
       "Registro correcto.",
@@ -81,19 +108,49 @@ export const registerRequest = async (
 export const refreshRequest = async (
   refreshToken: string
 ): Promise<RefreshResponse> => {
-  const response = await api.post("/auth/refresh", {
-    refresh_token: refreshToken,
-  });
+  const response = await api.post(
+    "/auth/refresh",
+    {
+      refresh_token:
+        refreshToken,
+    }
+  );
 
   const payload = response.data?.data;
 
   return {
-    token: payload?.access_token ?? null,
-    refreshToken: payload?.refresh_token ?? null,
-    role: payload?.role ?? null,
-    expiresIn: payload?.expires_in ?? null,
+    token:
+      payload?.access_token ??
+      null,
+    refreshToken:
+      payload?.refresh_token ??
+      null,
+    role:
+      payload?.role ??
+      null,
+    expiresIn:
+      payload?.expires_in ??
+      null,
     message:
       response.data?.message ??
       "Token actualizado.",
+  };
+};
+
+export const forgotPasswordRequest = async (
+  data: ForgotPasswordPayload
+): Promise<ForgotPasswordResponse> => {
+  const response = await api.post(
+    "/auth/forgot-password",
+    data
+  );
+
+  return {
+    success:
+      response.data?.success ??
+      true,
+    message:
+      response.data?.message ??
+      "Se envió el enlace de recuperación a tu correo.",
   };
 };

@@ -1,7 +1,11 @@
 // src/store/useAuthStore.ts
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import {
+  persist,
+  createJSONStorage,
+} from "zustand/middleware";
+
 import { refreshRequest } from "@/modules/auth/services/authService";
 
 export type UserRole =
@@ -24,6 +28,8 @@ interface AuthState {
   refreshToken: string | null;
   expiresIn: number | null;
 
+  message: string | null;
+
   hasHydrated: boolean;
 
   setAuth: (data: {
@@ -31,165 +37,246 @@ interface AuthState {
     token: string;
     refreshToken?: string | null;
     expiresIn?: number | null;
+    message?: string | null;
   }) => void;
 
   setUser: (user: AuthUser) => void;
 
+  setMessage: (
+    message: string | null
+  ) => void;
+
   refreshSession: () => Promise<boolean>;
 
   logout: () => void;
-  setHasHydrated: (value: boolean) => void;
 
-  hasRole: (roles: UserRole[]) => boolean;
+  setHasHydrated: (
+    value: boolean
+  ) => void;
+
+  hasRole: (
+    roles: UserRole[]
+  ) => boolean;
 
   isUser: () => boolean;
+
   isAffiliate: () => boolean;
+
   isAdmin: () => boolean;
+
   isSuperAdmin: () => boolean;
+
   isAdminOrSuperAdmin: () => boolean;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      token: null,
-      refreshToken: null,
-      expiresIn: null,
+export const useAuthStore =
+  create<AuthState>()(
+    persist(
+      (set, get) => ({
+        user: null,
+        token: null,
+        refreshToken: null,
+        expiresIn: null,
 
-      hasHydrated: false,
+        message: null,
 
-      setAuth: ({
-        user,
-        token,
-        refreshToken = null,
-        expiresIn = null,
-      }) => {
-        set({
+        hasHydrated: false,
+
+        setAuth: ({
           user,
           token,
-          refreshToken,
-          expiresIn,
-        });
-      },
+          refreshToken = null,
+          expiresIn = null,
+          message = null,
+        }) => {
+          set({
+            user,
+            token,
+            refreshToken,
+            expiresIn,
+            message,
+          });
+        },
 
-      setUser: (user) => {
-        set({ user });
-      },
+        setUser: (user) => {
+          set({
+            user,
+          });
+        },
 
-      refreshSession: async () => {
-        const currentRefreshToken = get().refreshToken;
-        const currentUser = get().user;
+        setMessage: (message) => {
+          set({
+            message,
+          });
+        },
 
-        if (!currentRefreshToken) {
-          console.error("No existe refresh token.");
-          return false;
-        }
+        refreshSession: async () => {
+          const currentRefreshToken =
+            get().refreshToken;
 
-        try {
-          const response = await refreshRequest(
-            currentRefreshToken
-          );
+          const currentUser =
+            get().user;
 
-          if (!response.token) {
+          if (!currentRefreshToken) {
+            console.error(
+              "No existe refresh token."
+            );
+
             return false;
           }
 
-          const newRole = response.role as UserRole | null;
+          try {
+            const response =
+              await refreshRequest(
+                currentRefreshToken
+              );
 
+            if (!response.token) {
+              return false;
+            }
+
+            const newRole =
+              response.role as
+                | UserRole
+                | null;
+
+            set({
+              token: response.token,
+
+              refreshToken:
+                response.refreshToken ??
+                currentRefreshToken,
+
+              expiresIn:
+                response.expiresIn,
+
+              user: currentUser
+                ? {
+                    ...currentUser,
+
+                    role:
+                      newRole ??
+                      currentUser.role,
+                  }
+                : null,
+            });
+
+            return true;
+          } catch (error) {
+            console.error(
+              "Error al refrescar la sesión:",
+              error
+            );
+
+            return false;
+          }
+        },
+
+        logout: () => {
           set({
-            token: response.token,
-            refreshToken:
-              response.refreshToken ?? currentRefreshToken,
-            expiresIn: response.expiresIn,
-            user: currentUser
-              ? {
-                  ...currentUser,
-                  role: newRole ?? currentUser.role,
-                }
-              : null,
+            user: null,
+            token: null,
+            refreshToken: null,
+            expiresIn: null,
+            message: null,
           });
 
-          return true;
-        } catch (error) {
-          console.error(
-            "Error al refrescar la sesión:",
-            error
+          if (
+            typeof window !==
+            "undefined"
+          ) {
+            localStorage.removeItem(
+              "auth-storage"
+            );
+          }
+        },
+
+        setHasHydrated: (
+          value
+        ) => {
+          set({
+            hasHydrated: value,
+          });
+        },
+
+        hasRole: (roles) => {
+          const user =
+            get().user;
+
+          if (!user) {
+            return false;
+          }
+
+          return roles.includes(
+            user.role
           );
+        },
 
-          return false;
-        }
-      },
+        isUser: () => {
+          return (
+            get().user?.role ===
+            "user"
+          );
+        },
 
-      logout: () => {
-        set({
-          user: null,
-          token: null,
-          refreshToken: null,
-          expiresIn: null,
-        });
+        isAffiliate: () => {
+          return (
+            get().user?.role ===
+            "affiliate"
+          );
+        },
 
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("auth-storage");
-        }
-      },
+        isAdmin: () => {
+          return (
+            get().user?.role ===
+            "admin"
+          );
+        },
 
-      setHasHydrated: (value) => {
-        set({
-          hasHydrated: value,
-        });
-      },
+        isSuperAdmin: () => {
+          return (
+            get().user?.role ===
+            "superadmin"
+          );
+        },
 
-      hasRole: (roles) => {
-        const user = get().user;
+        isAdminOrSuperAdmin:
+          () => {
+            const role =
+              get().user?.role;
 
-        if (!user) return false;
-
-        return roles.includes(user.role);
-      },
-
-      isUser: () => {
-        return get().user?.role === "user";
-      },
-
-      isAffiliate: () => {
-        return get().user?.role === "affiliate";
-      },
-
-      isAdmin: () => {
-        return get().user?.role === "admin";
-      },
-
-      isSuperAdmin: () => {
-        return get().user?.role === "superadmin";
-      },
-
-      isAdminOrSuperAdmin: () => {
-        const role = get().user?.role;
-
-        return (
-          role === "admin" ||
-          role === "superadmin"
-        );
-      },
-    }),
-    {
-      name: "auth-storage",
-
-      storage: createJSONStorage(
-        () => localStorage
-      ),
-
-      partialize: (state) => ({
-        user: state.user,
-        token: state.token,
-        refreshToken: state.refreshToken,
-        expiresIn: state.expiresIn,
+            return (
+              role === "admin" ||
+              role === "superadmin"
+            );
+          },
       }),
 
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
-      },
-    }
-  )
-);
+      {
+        name: "auth-storage",
+
+        storage:
+          createJSONStorage(
+            () => localStorage
+          ),
+
+        partialize: (
+          state
+        ) => ({
+          user: state.user,
+          token: state.token,
+          refreshToken:
+            state.refreshToken,
+          expiresIn:
+            state.expiresIn,
+        }),
+
+        onRehydrateStorage:
+          () => (state) => {
+            state?.setHasHydrated(
+              true
+            );
+          },
+      }
+    )
+  );
