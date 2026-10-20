@@ -29,6 +29,13 @@ export type ForgotPasswordPayload = {
   email: string;
 };
 
+export type ResetPasswordPayload = {
+  email: string;
+  token: string;
+  password: string;
+  password_confirmation: string;
+};
+
 export type AuthResponse = {
   user: AuthUser | null;
   token: string | null;
@@ -46,6 +53,11 @@ export type RefreshResponse = {
 };
 
 export type ForgotPasswordResponse = {
+  success: boolean;
+  message: string;
+};
+
+export type ResetPasswordResponse = {
   success: boolean;
   message: string;
 };
@@ -111,8 +123,7 @@ export const refreshRequest = async (
   const response = await api.post(
     "/auth/refresh",
     {
-      refresh_token:
-        refreshToken,
+      refresh_token: refreshToken,
     }
   );
 
@@ -152,5 +163,23 @@ export const forgotPasswordRequest = async (
     message:
       response.data?.message ??
       "Se envió el enlace de recuperación a tu correo.",
+  };
+};
+
+export const resetPasswordRequest = async (
+  data: ResetPasswordPayload
+): Promise<ResetPasswordResponse> => {
+  const response = await api.post(
+    "/auth/reset-password",
+    data
+  );
+
+  return {
+    success:
+      response.data?.success ??
+      true,
+    message:
+      response.data?.message ??
+      "Contraseña actualizada correctamente.",
   };
 };

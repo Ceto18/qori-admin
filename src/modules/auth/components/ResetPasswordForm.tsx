@@ -13,6 +13,10 @@ import {
     EyeIcon,
 } from "@/shared/icons";
 
+import {
+    resetPasswordRequest,
+} from "../services/authService";
+
 import { showSuccess } from "@/shared/utils/toast";
 import { handleApiError } from "@/shared/utils/handleApiError";
 
@@ -37,16 +41,20 @@ export default function ResetPasswordForm({
         setShowPasswordConfirmation,
     ] = useState(false);
 
-    const [password, setPassword] =
-        useState("");
+    const [
+        password,
+        setPassword,
+    ] = useState("");
 
     const [
         passwordConfirmation,
         setPasswordConfirmation,
     ] = useState("");
 
-    const [loading, setLoading] =
-        useState(false);
+    const [
+        loading,
+        setLoading,
+    ] = useState(false);
 
     const handleResetPassword = async (
         e: React.FormEvent
@@ -54,6 +62,32 @@ export default function ResetPasswordForm({
         e.preventDefault();
 
         if (loading) return;
+
+        if (!email.trim()) {
+            handleApiError({
+                response: {
+                    data: {
+                        message:
+                            "No se pudo obtener el correo asociado a la recuperación.",
+                    },
+                },
+            });
+
+            return;
+        }
+
+        if (!token.trim()) {
+            handleApiError({
+                response: {
+                    data: {
+                        message:
+                            "El token de recuperación no es válido.",
+                    },
+                },
+            });
+
+            return;
+        }
 
         if (
             !password.trim() ||
@@ -103,27 +137,19 @@ export default function ResetPasswordForm({
         setLoading(true);
 
         try {
-            /*
-             * Aquí luego conectamos:
-             *
-             * await resetPasswordRequest({
-             *     token,
-             *     email,
-             *     password,
-             *     password_confirmation:
-             *         passwordConfirmation,
-             * });
-             */
-
-            console.log({
-                token,
-                email,
-                password,
-                password_confirmation:
-                    passwordConfirmation,
-            });
+            const response =
+                await resetPasswordRequest({
+                    email: email
+                        .trim()
+                        .toLowerCase(),
+                    token,
+                    password,
+                    password_confirmation:
+                        passwordConfirmation,
+                });
 
             showSuccess(
+                response.message ??
                 "Contraseña actualizada correctamente."
             );
 
