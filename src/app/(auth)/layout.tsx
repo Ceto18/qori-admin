@@ -25,8 +25,8 @@ export default function AuthLayout({
                                     <Image
                                         width={231}
                                         height={48}
-                                        src="./images/logo/qori-logo-200.png"
-                                        alt="Logo"
+                                        src="/images/logo/qori-logo-200.png"
+                                        alt="logo"
                                     />
                                 </Link>
                                 <p className="text-center text-gray-400 dark:text-white/60">
