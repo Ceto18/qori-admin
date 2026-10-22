@@ -693,47 +693,37 @@ export default function MembershipPaymentModal({
                                 </div>
 
                                 {/* FEATURES */}
-                                {plan.features?.length >
-                                    0 && (
-                                        <div className="mt-6">
+                                {/* FEATURES */}
+                                {plan.features?.length > 0 && (
+                                    <div className="mt-5">
+                                        <div className="flex items-center justify-between gap-3">
                                             <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                                 Incluye
                                             </p>
 
-                                            <ul className="mt-3 space-y-3">
-                                                {[
-                                                    ...plan.features,
-                                                ]
-                                                    .sort(
-                                                        (
-                                                            a,
-                                                            b
-                                                        ) =>
-                                                            a.sort_order -
-                                                            b.sort_order
-                                                    )
-                                                    .map(
-                                                        (
-                                                            feature
-                                                        ) => (
-                                                            <li
-                                                                key={`${feature.description}-${feature.sort_order}`}
-                                                                className="flex items-start gap-3 text-sm leading-5 text-gray-500 dark:text-gray-400"
-                                                            >
-                                                                <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
-
-                                                                <span>
-                                                                    {
-                                                                        feature.description
-                                                                    }
-                                                                </span>
-                                                            </li>
-                                                        )
-                                                    )}
-                                            </ul>
+                                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                                                {plan.features.length} beneficios
+                                            </span>
                                         </div>
-                                    )}
 
+                                        <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+                                            {[...plan.features]
+                                                .sort((a, b) => a.sort_order - b.sort_order)
+                                                .map((feature) => (
+                                                    <div
+                                                        key={`${feature.description}-${feature.sort_order}`}
+                                                        className="flex min-w-0 items-start gap-2"
+                                                    >
+                                                        <span className="mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
+
+                                                        <span className="text-xs leading-5 text-gray-500 dark:text-gray-400">
+                                                            {feature.description}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    </div>
+                                )}
                                 {/* NOTA */}
                                 <div className="mt-auto pt-6">
                                     <div className="rounded-xl bg-brand-50/60 p-4 dark:bg-brand-500/5">
