@@ -57,7 +57,7 @@ export default function MainDataSection({ form, updateField }: Props) {
                     <Input
                         type="text"
                         value={form.institution}
-                        placeholder="Ej. Myl Comunicaciones"
+                        placeholder="Ej. Qori ID"
                         onChange={(e) =>
                             updateField("institution", e.target.value)
                         }
