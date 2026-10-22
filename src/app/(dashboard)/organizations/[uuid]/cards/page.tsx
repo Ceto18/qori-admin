@@ -151,12 +151,19 @@ function CardsPageContent() {
   const handleDownloadQrImage = () => {
     if (!selectedQrUrl) return;
 
-    const fileName = selectedQrCard?.full_name
-      ? `qr-${selectedQrCard.full_name
-          .toLowerCase()
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9-]/g, "")}.svg`
-      : "codigo-qr.svg";
+    const baseName =
+      selectedQrCardName && selectedQrCardName.trim().length > 0
+        ? selectedQrCardName
+        : "tarjeta";
+
+    const safeFileName = baseName
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
+
+    const fileName = `${safeFileName}.svg`;
 
     const link = document.createElement("a");
     link.href = selectedQrUrl;
@@ -165,7 +172,7 @@ function CardsPageContent() {
     link.click();
     link.remove();
   };
-
+  
   const handleSearchChange = (value: string) => {
     setSearch(value);
   };
@@ -255,9 +262,8 @@ function CardsPageContent() {
 
   const selectedQrCardName =
     selectedQrCard?.full_name ??
-    `${selectedQrCard?.first_name ?? ""} ${
-      selectedQrCard?.last_name ?? ""
-    }`.trim();
+    `${selectedQrCard?.first_name ?? ""} ${selectedQrCard?.last_name ?? ""
+      }`.trim();
 
   if (!organizationUuid) {
     return (
@@ -313,9 +319,8 @@ function CardsPageContent() {
       <ConfirmModal
         open={Boolean(cardToDelete)}
         title="Eliminar tarjeta"
-        message={`¿Seguro que deseas eliminar la tarjeta "${
-          cardToDelete?.full_name ?? ""
-        }"? Esta acción no se puede deshacer.`}
+        message={`¿Seguro que deseas eliminar la tarjeta "${cardToDelete?.full_name ?? ""
+          }"? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         cancelText="Cancelar"
         loading={loading}
