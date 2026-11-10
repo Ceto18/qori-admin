@@ -56,9 +56,15 @@ export default function UserMetaCard() {
             last_name: profile.profile.last_name ?? "",
             phone: profile.profile.phone ?? "",
             address: profile.profile.address ?? "",
-            district_id: profile.profile.district_id ?? 0,
-            province_id: profile.profile.province_id ?? 0,
-            department_id: profile.profile.department_id ?? 0,
+
+            district_id:
+                profile.profile.district?.id ?? 0,
+
+            province_id:
+                profile.profile.province?.id ?? 0,
+
+            department_id:
+                profile.profile.department?.id ?? 0,
         });
     }, [profile]);
 
@@ -70,9 +76,15 @@ export default function UserMetaCard() {
             last_name: profile.profile.last_name ?? "",
             phone: profile.profile.phone ?? "",
             address: profile.profile.address ?? "",
-            district_id: profile.profile.district_id ?? 0,
-            province_id: profile.profile.province_id ?? 0,
-            department_id: profile.profile.department_id ?? 0,
+
+            district_id:
+                profile.profile.district?.id ?? 0,
+
+            province_id:
+                profile.profile.province?.id ?? 0,
+
+            department_id:
+                profile.profile.department?.id ?? 0,
         });
     };
 
@@ -112,16 +124,24 @@ export default function UserMetaCard() {
             last_name: form.last_name.trim(),
             phone: form.phone.trim(),
             address: form.address.trim(),
+
             district_id: form.district_id,
             province_id: form.province_id,
             department_id: form.department_id,
         };
 
-        console.log("Actualizando perfil:", payload);
+        console.log(
+            "Actualizando perfil:",
+            payload
+        );
 
-        const success = await updateProfile(payload);
+        const success =
+            await updateProfile(payload);
 
-        console.log("Resultado actualización:", success);
+        console.log(
+            "Resultado actualización:",
+            success
+        );
 
         if (success) {
             closeModal();
@@ -157,10 +177,14 @@ export default function UserMetaCard() {
                                 <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                     <span>{profile.email}</span>
 
-                                    <span className="hidden sm:inline">•</span>
+                                    <span className="hidden sm:inline">
+                                        •
+                                    </span>
 
                                     <span>
-                                        {getRoleLabel(profile.role)}
+                                        {getRoleLabel(
+                                            profile.role
+                                        )}
                                     </span>
                                 </div>
                             </div>
@@ -196,10 +220,8 @@ export default function UserMetaCard() {
 
                             <ProfileItem
                                 label="Teléfono"
-                                value={
-                                    `${userProfile.country_code ?? ""} ${userProfile.phone ?? ""
-                                        }`.trim()
-                                }
+                                value={`${userProfile.country_code ?? ""} ${userProfile.phone ?? ""
+                                    }`.trim()}
                             />
 
                             <ProfileItem
@@ -219,7 +241,9 @@ export default function UserMetaCard() {
 
                             <ProfileItem
                                 label="Rol"
-                                value={getRoleLabel(profile.role)}
+                                value={getRoleLabel(
+                                    profile.role
+                                )}
                             />
                         </div>
                     </div>
@@ -348,15 +372,21 @@ export default function UserMetaCard() {
                                     {/* DEPARTAMENTO */}
 
                                     <div>
-                                        <Label>Departamento</Label>
+                                        <Label>
+                                            Departamento
+                                        </Label>
 
                                         <Input
                                             type="number"
-                                            value={form.department_id}
+                                            value={
+                                                form.department_id
+                                            }
                                             onChange={(event) =>
                                                 handleChange(
                                                     "department_id",
-                                                    Number(event.target.value)
+                                                    Number(
+                                                        event.target.value
+                                                    )
                                                 )
                                             }
                                         />
@@ -365,7 +395,9 @@ export default function UserMetaCard() {
                                     {/* PROVINCIA */}
 
                                     <div>
-                                        <Label>Provincia</Label>
+                                        <Label>
+                                            Provincia
+                                        </Label>
 
                                         <Input
                                             type="number"
@@ -373,7 +405,9 @@ export default function UserMetaCard() {
                                             onChange={(event) =>
                                                 handleChange(
                                                     "province_id",
-                                                    Number(event.target.value)
+                                                    Number(
+                                                        event.target.value
+                                                    )
                                                 )
                                             }
                                         />
@@ -382,7 +416,9 @@ export default function UserMetaCard() {
                                     {/* DISTRITO */}
 
                                     <div>
-                                        <Label>Distrito</Label>
+                                        <Label>
+                                            Distrito
+                                        </Label>
 
                                         <Input
                                             type="number"
@@ -390,7 +426,9 @@ export default function UserMetaCard() {
                                             onChange={(event) =>
                                                 handleChange(
                                                     "district_id",
-                                                    Number(event.target.value)
+                                                    Number(
+                                                        event.target.value
+                                                    )
                                                 )
                                             }
                                         />
@@ -411,7 +449,9 @@ export default function UserMetaCard() {
                                     {/* EMAIL */}
 
                                     <div>
-                                        <Label>Correo electrónico</Label>
+                                        <Label>
+                                            Correo electrónico
+                                        </Label>
 
                                         <Input
                                             type="text"
@@ -423,7 +463,9 @@ export default function UserMetaCard() {
                                     {/* DOCUMENTO */}
 
                                     <div>
-                                        <Label>Documento</Label>
+                                        <Label>
+                                            Documento
+                                        </Label>
 
                                         <Input
                                             type="text"
@@ -508,7 +550,11 @@ function ProfileItem({
 }
 
 function getRoleLabel(
-    role: "user" | "affiliate" | "admin" | "superadmin"
+    role:
+        | "user"
+        | "affiliate"
+        | "admin"
+        | "superadmin"
 ) {
     switch (role) {
         case "affiliate":
