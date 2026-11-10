@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 
 import { PencilIcon } from "@/shared/icons";
-
 import { useModal } from "@/shared/hooks/useModal";
 
 import Input from "@/shared/components/form/input/InputField";
@@ -17,10 +16,6 @@ type ProfileForm = {
     name: string;
     last_name: string;
     phone: string;
-    address: string;
-    district_id: number;
-    province_id: number;
-    department_id: number;
 };
 
 export default function UserMetaCard() {
@@ -38,16 +33,8 @@ export default function UserMetaCard() {
         name: "",
         last_name: "",
         phone: "",
-        address: "",
-        district_id: 0,
-        province_id: 0,
-        department_id: 0,
     });
 
-    /*
-     * Mantiene sincronizado el formulario
-     * cuando cambia el perfil en Zustand.
-     */
     useEffect(() => {
         if (!profile) return;
 
@@ -55,16 +42,6 @@ export default function UserMetaCard() {
             name: profile.profile.name ?? "",
             last_name: profile.profile.last_name ?? "",
             phone: profile.profile.phone ?? "",
-            address: profile.profile.address ?? "",
-
-            district_id:
-                profile.profile.district?.id ?? 0,
-
-            province_id:
-                profile.profile.province?.id ?? 0,
-
-            department_id:
-                profile.profile.department?.id ?? 0,
         });
     }, [profile]);
 
@@ -75,16 +52,6 @@ export default function UserMetaCard() {
             name: profile.profile.name ?? "",
             last_name: profile.profile.last_name ?? "",
             phone: profile.profile.phone ?? "",
-            address: profile.profile.address ?? "",
-
-            district_id:
-                profile.profile.district?.id ?? 0,
-
-            province_id:
-                profile.profile.province?.id ?? 0,
-
-            department_id:
-                profile.profile.department?.id ?? 0,
         });
     };
 
@@ -106,7 +73,7 @@ export default function UserMetaCard() {
 
     const handleChange = (
         field: keyof ProfileForm,
-        value: string | number
+        value: string
     ) => {
         setForm((prev) => ({
             ...prev,
@@ -123,11 +90,17 @@ export default function UserMetaCard() {
             name: form.name.trim(),
             last_name: form.last_name.trim(),
             phone: form.phone.trim(),
-            address: form.address.trim(),
 
-            district_id: form.district_id,
-            province_id: form.province_id,
-            department_id: form.department_id,
+            address: profile.profile.address ?? "",
+
+            department_id:
+                profile.profile.department?.id ?? 0,
+
+            province_id:
+                profile.profile.province?.id ?? 0,
+
+            district_id:
+                profile.profile.district?.id ?? 0,
         };
 
         console.log(
@@ -166,8 +139,6 @@ export default function UserMetaCard() {
             <div className="mb-6 rounded-2xl border border-gray-200 p-5 lg:p-6 dark:border-gray-800">
                 <div className="flex flex-col gap-5 sm:flex-row xl:gap-10">
                     <div className="flex-1">
-                        {/* CABECERA */}
-
                         <div className="mb-6 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <h4 className="mb-1 text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -199,8 +170,6 @@ export default function UserMetaCard() {
                                 Editar
                             </button>
                         </div>
-
-                        {/* INFORMACIÓN PERSONAL */}
 
                         <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2 xl:grid-cols-4">
                             <ProfileItem
@@ -235,11 +204,6 @@ export default function UserMetaCard() {
                             />
 
                             <ProfileItem
-                                label="Dirección"
-                                value={userProfile.address}
-                            />
-
-                            <ProfileItem
                                 label="Rol"
                                 value={getRoleLabel(
                                     profile.role
@@ -260,15 +224,13 @@ export default function UserMetaCard() {
                 className="m-4 max-w-[700px]"
             >
                 <div className="relative no-scrollbar w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 lg:p-11 dark:bg-gray-900">
-                    {/* HEADER */}
-
                     <div className="px-2 pe-14">
                         <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
                             Editar información personal
                         </h4>
 
                         <p className="mb-6 text-sm text-gray-500 lg:mb-7 dark:text-gray-400">
-                            Actualiza tu información personal.
+                            Actualiza tus datos personales.
                         </p>
                     </div>
 
@@ -279,18 +241,12 @@ export default function UserMetaCard() {
                         }}
                     >
                         <div className="custom-scrollbar max-h-[450px] overflow-y-auto px-2 pb-3">
-                            {/* ====================================================== */}
-                            {/* INFORMACIÓN PERSONAL */}
-                            {/* ====================================================== */}
-
                             <div>
                                 <h5 className="mb-5 text-lg font-medium text-gray-800 lg:mb-6 dark:text-white/90">
                                     Información personal
                                 </h5>
 
                                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                                    {/* NOMBRES */}
-
                                     <div>
                                         <Label>Nombres</Label>
 
@@ -305,8 +261,6 @@ export default function UserMetaCard() {
                                             }
                                         />
                                     </div>
-
-                                    {/* APELLIDOS */}
 
                                     <div>
                                         <Label>Apellidos</Label>
@@ -323,8 +277,6 @@ export default function UserMetaCard() {
                                         />
                                     </div>
 
-                                    {/* TELÉFONO */}
-
                                     <div>
                                         <Label>Teléfono</Label>
 
@@ -339,106 +291,8 @@ export default function UserMetaCard() {
                                             }
                                         />
                                     </div>
-
-                                    {/* DIRECCIÓN */}
-
-                                    <div>
-                                        <Label>Dirección</Label>
-
-                                        <Input
-                                            type="text"
-                                            value={form.address}
-                                            onChange={(event) =>
-                                                handleChange(
-                                                    "address",
-                                                    event.target.value
-                                                )
-                                            }
-                                        />
-                                    </div>
                                 </div>
                             </div>
-
-                            {/* ====================================================== */}
-                            {/* UBICACIÓN */}
-                            {/* ====================================================== */}
-
-                            <div className="mt-7">
-                                <h5 className="mb-5 text-lg font-medium text-gray-800 lg:mb-6 dark:text-white/90">
-                                    Ubicación
-                                </h5>
-
-                                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                                    {/* DEPARTAMENTO */}
-
-                                    <div>
-                                        <Label>
-                                            Departamento
-                                        </Label>
-
-                                        <Input
-                                            type="number"
-                                            value={
-                                                form.department_id
-                                            }
-                                            onChange={(event) =>
-                                                handleChange(
-                                                    "department_id",
-                                                    Number(
-                                                        event.target.value
-                                                    )
-                                                )
-                                            }
-                                        />
-                                    </div>
-
-                                    {/* PROVINCIA */}
-
-                                    <div>
-                                        <Label>
-                                            Provincia
-                                        </Label>
-
-                                        <Input
-                                            type="number"
-                                            value={form.province_id}
-                                            onChange={(event) =>
-                                                handleChange(
-                                                    "province_id",
-                                                    Number(
-                                                        event.target.value
-                                                    )
-                                                )
-                                            }
-                                        />
-                                    </div>
-
-                                    {/* DISTRITO */}
-
-                                    <div>
-                                        <Label>
-                                            Distrito
-                                        </Label>
-
-                                        <Input
-                                            type="number"
-                                            value={form.district_id}
-                                            onChange={(event) =>
-                                                handleChange(
-                                                    "district_id",
-                                                    Number(
-                                                        event.target.value
-                                                    )
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* ====================================================== */}
-                            {/* INFORMACIÓN DE CUENTA */}
-                            {/* ====================================================== */}
 
                             <div className="mt-7">
                                 <h5 className="mb-5 text-lg font-medium text-gray-800 lg:mb-6 dark:text-white/90">
@@ -446,8 +300,6 @@ export default function UserMetaCard() {
                                 </h5>
 
                                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                                    {/* EMAIL */}
-
                                     <div>
                                         <Label>
                                             Correo electrónico
@@ -459,8 +311,6 @@ export default function UserMetaCard() {
                                             disabled
                                         />
                                     </div>
-
-                                    {/* DOCUMENTO */}
 
                                     <div>
                                         <Label>
@@ -476,10 +326,6 @@ export default function UserMetaCard() {
                                 </div>
                             </div>
 
-                            {/* ====================================================== */}
-                            {/* ERROR */}
-                            {/* ====================================================== */}
-
                             {profileError && (
                                 <div className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-500/20 dark:bg-red-500/10">
                                     <p className="text-sm text-red-600 dark:text-red-400">
@@ -488,10 +334,6 @@ export default function UserMetaCard() {
                                 </div>
                             )}
                         </div>
-
-                        {/* ====================================================== */}
-                        {/* BOTONES */}
-                        {/* ====================================================== */}
 
                         <div className="mt-6 flex items-center gap-3 px-2 lg:justify-end">
                             <Button
@@ -510,11 +352,7 @@ export default function UserMetaCard() {
                                     updatingProfile ||
                                     !form.name.trim() ||
                                     !form.last_name.trim() ||
-                                    !form.phone.trim() ||
-                                    !form.address.trim() ||
-                                    form.department_id <= 0 ||
-                                    form.province_id <= 0 ||
-                                    form.district_id <= 0
+                                    !form.phone.trim()
                                 }
                             >
                                 {updatingProfile

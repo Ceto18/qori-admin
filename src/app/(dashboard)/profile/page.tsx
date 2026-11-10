@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 
+import { useAuthStore } from "@/store/useAuthStore";
 import { useProfileStore } from "@/modules/profile/store/useProfileStore";
 
 import UserMetaCard from "@/modules/profile/components/UserMetaCard";
@@ -9,6 +10,14 @@ import UserAddressCard from "@/modules/profile/components/UserAddressCard";
 import Security from "@/modules/profile/components/Security";
 
 export default function ProfilePage() {
+  const token = useAuthStore(
+    (state) => state.token
+  );
+
+  const hasHydrated = useAuthStore(
+    (state) => state.hasHydrated
+  );
+
   const {
     profile,
     loadingProfile,
@@ -17,13 +26,25 @@ export default function ProfilePage() {
   } = useProfileStore();
 
   useEffect(() => {
+    if (!hasHydrated) return;
+    if (!token) return;
+
     fetchProfile();
-  }, [fetchProfile]);
+  }, [
+    hasHydrated,
+    token,
+    fetchProfile,
+  ]);
+
+  if (!hasHydrated) {
+    return null;
+  }
 
   if (loadingProfile) {
     return (
       <div className="space-y-6">
         {/* HEADER SKELETON */}
+
         <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
           <div className="h-6 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
 
@@ -33,6 +54,7 @@ export default function ProfilePage() {
         </div>
 
         {/* PROFILE CARD SKELETON */}
+
         <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
           <div className="flex items-center gap-4">
             <div className="h-16 w-16 animate-pulse rounded-full bg-gray-200 dark:bg-gray-800" />
@@ -45,13 +67,15 @@ export default function ProfilePage() {
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index}>
-                <div className="h-3 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+            {Array.from({ length: 6 }).map(
+              (_, index) => (
+                <div key={index}>
+                  <div className="h-3 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
 
-                <div className="mt-2 h-5 w-40 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
-              </div>
-            ))}
+                  <div className="mt-2 h-5 w-40 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+                </div>
+              )
+            )}
           </div>
         </div>
       </div>
@@ -79,6 +103,7 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       {/* HEADER */}
+
       <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-brand-500/10 blur-3xl" />
 
@@ -98,12 +123,15 @@ export default function ProfilePage() {
       </div>
 
       {/* DATOS PERSONALES */}
+
       <UserMetaCard />
 
       {/* DIRECCIÓN */}
+
       <UserAddressCard />
 
       {/* SEGURIDAD */}
+
       <Security />
     </div>
   );
