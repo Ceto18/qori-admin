@@ -1,3 +1,5 @@
+import type { LocationItem } from "@/modules/auth/types/locationTypes";
+
 export type UserProfile = {
   name: string;
   last_name: string;
@@ -6,10 +8,11 @@ export type UserProfile = {
   country_code: string;
   phone: string;
   address: string;
-  district_id: number | null;
-  province_id: number | null;
-  department_id: number | null;
-  country_id: number | null;
+
+  country: LocationItem | null;
+  department: LocationItem | null;
+  province: LocationItem | null;
+  district: LocationItem | null;
 };
 
 export type ProfileData = {
